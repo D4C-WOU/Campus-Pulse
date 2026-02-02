@@ -229,89 +229,96 @@ class _AdminDashboardState extends State<AdminDashboard>
                         ),
                       ),
                     const SizedBox(height: 14),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          data['status'] == 'active'
-                              ? 'Active • ${alertDuration(data['createdAt'])}'
-                              : data['isFalseReport'] == true
-                              ? 'False Alert'
-                              : 'Resolved',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                        if (data['status'] == 'active')
-                          Wrap(
-                            spacing: 12,
-                            children: [
-                              /// ✅ PROFESSIONAL RESOLVE BUTTON
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF2563EB),
-                                  foregroundColor: Colors.white,
-                                  elevation: 0,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 22,
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                ),
-                                onPressed: () => _alertService.resolveAlert(
-                                  filtered[index].id,
-                                  adminUid,
-                                ),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.check_circle_outline, size: 18),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      'Resolve Issue',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
 
-                              /// ❌ FALSE ALERT BUTTON
-                              OutlinedButton(
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: Colors.grey.shade700,
-                                  side: BorderSide(color: Colors.grey.shade300),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 22,
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
+                    // --- UI FIX STARTS HERE ---
+                    // 1. Status Text on its own line
+                    Text(
+                      data['status'] == 'active'
+                          ? 'Active • ${alertDuration(data['createdAt'])}'
+                          : data['isFalseReport'] == true
+                          ? 'False Alert'
+                          : 'Resolved',
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+
+                    // 2. Action Buttons (Only if active)
+                    // We use Expanded to ensure they don't overlap on mobile
+                    if (data['status'] == 'active') ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          /// ✅ PROFESSIONAL RESOLVE BUTTON
+                          Expanded(
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF2563EB),
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
                                 ),
-                                onPressed: () => _alertService.markFalseReport(
-                                  filtered[index].id,
-                                  adminUid,
-                                ),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.flag_outlined, size: 18),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      'False Alert',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                            ],
+                              onPressed: () => _alertService.resolveAlert(
+                                filtered[index].id,
+                                adminUid,
+                              ),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.check_circle_outline, size: 18),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    'Resolve',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                      ],
-                    ),
+
+                          const SizedBox(width: 12),
+
+                          /// ❌ FALSE ALERT BUTTON
+                          Expanded(
+                            child: OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.grey.shade700,
+                                side: BorderSide(color: Colors.grey.shade300),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              onPressed: () => _alertService.markFalseReport(
+                                filtered[index].id,
+                                adminUid,
+                              ),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.flag_outlined, size: 18),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    'False',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    // --- UI FIX ENDS HERE ---
                   ],
                 ),
               ),

@@ -90,9 +90,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                 'Authorized personnel only',
                 style: TextStyle(color: Colors.grey),
               ),
-
               const SizedBox(height: 40),
-
               TextField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
@@ -101,9 +99,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                   prefixIcon: Icon(Icons.email),
                 ),
               ),
-
               const SizedBox(height: 16),
-
               TextField(
                 controller: _passwordController,
                 obscureText: true,
@@ -112,14 +108,11 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                   prefixIcon: Icon(Icons.lock),
                 ),
               ),
-
               if (_error != null) ...[
                 const SizedBox(height: 16),
                 Text(_error!, style: const TextStyle(color: Colors.red)),
               ],
-
               const SizedBox(height: 32),
-
               SizedBox(
                 width: double.infinity,
                 height: 56,
@@ -128,9 +121,19 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.redAccent,
                     foregroundColor: Colors.white,
+                    disabledBackgroundColor: Colors.redAccent.withValues(
+                      alpha: 0.7,
+                    ),
                   ),
                   child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
+                      ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.5,
+                          ),
+                        )
                       : const Text(
                           'LOGIN',
                           style: TextStyle(
