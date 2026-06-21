@@ -1,4 +1,4 @@
-from backend.db.database import SessionLocal
+from app.db.database import SessionLocal
 
 def get_db():
   db = SessionLocal()
