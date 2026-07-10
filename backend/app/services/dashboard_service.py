@@ -1,5 +1,6 @@
 from sqlalchemy import func
-from sqlalchemy.orm import Session, text 
+from sqlalchemy.orm import Session
+from sqlalchemy import text 
 
 from app.models.alert import Alert
 

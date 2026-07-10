@@ -54,6 +54,12 @@
   --border: var(--border-subtle);
   --input: var(--border-strong);
   --ring: var(--status-investigating);
+
+
+  --accent-teal: #2dd4bf;
+  --accent-amber: #fbbf24;
+  --accent-violet: #a78bfa;
+
 }
 
 @theme inline {
@@ -90,14 +96,57 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-  }
+  background-image:
+    radial-gradient(circle at 10% 0%, rgba(45, 212, 191, 0.06), transparent 40%),
+    radial-gradient(circle at 90% 10%, rgba(167, 139, 250, 0.06), transparent 40%),
+    radial-gradient(circle at 50% 100%, rgba(251, 191, 36, 0.04), transparent 50%);
+  background-attachment: fixed;
+}
+
   html {
     @apply font-sans;
     color-scheme: dark;
   }
 }
+
+
+/* Small gradient logo mark used in the sidebar */
+.brand-mark {
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, var(--accent-teal), var(--accent-violet));
+  flex-shrink: 0;
+}
+
+/* Priority pills -- colored chips instead of plain colored text, so
+   priority is scannable at a glance across a long alert list */
+.priority-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+.priority-pill-critical {
+  color: var(--priority-critical);
+  background: rgba(229, 72, 77, 0.14);
+}
+.priority-pill-high {
+  color: var(--priority-high);
+  background: rgba(242, 169, 59, 0.14);
+}
+.priority-pill-medium {
+  color: var(--priority-medium);
+  background: rgba(91, 141, 239, 0.14);
+}
+.priority-pill-low {
+  color: var(--priority-low);
+  background: rgba(107, 114, 128, 0.14);
+}
+
 
 /* --- Status utility classes: the single source of truth for alert color --- */
 .status-dot {

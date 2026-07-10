@@ -7,6 +7,25 @@ import { cn } from "@/lib/utils";
 import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+const INCIDENT_TYPES = [
+  {
+    value: "Fire",
+    label: "🔥 Fire",
+    hint: "Smoke, flames or fire emergency",
+  },
+  {
+    value: "Medical",
+    label: "🚑 Medical",
+    hint: "Injury, illness or medical emergency",
+  },
+  {
+    value: "Safety",
+    label: "🛡️ Safety",
+    hint: "Violence, suspicious activity or hazard",
+  },
+];
+
+
 export default function ReportPage() {
   const [type, setType] = useState("");
   const [message, setMessage] = useState("");
