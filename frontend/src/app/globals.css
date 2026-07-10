@@ -1,0 +1,209 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+  Campus Pulse design tokens
+  ---------------------------------
+  Dark, low-glare command-center surface -- built for a dashboard that
+  may be read at 2am during an actual incident. Color is never
+  decorative here: red/amber/blue/teal map 1:1 to alert status across
+  the whole app, so a glance at color alone tells you the state.
+*/
+:root {
+  --background: #0b0e14;
+  --surface: #12161f;
+  --surface-elevated: #171c27;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+
+  --foreground: #e8ebf2;
+  --muted-foreground: #8b93a6;
+
+  --status-active: #e5484d;
+  --status-active-bg: rgba(229, 72, 77, 0.12);
+  --status-acknowledged: #f2a93b;
+  --status-acknowledged-bg: rgba(242, 169, 59, 0.12);
+  --status-investigating: #5b8def;
+  --status-investigating-bg: rgba(91, 141, 239, 0.12);
+  --status-resolved: #34d8a6;
+  --status-resolved-bg: rgba(52, 216, 166, 0.12);
+  --status-false: #6b7280;
+  --status-false-bg: rgba(107, 114, 128, 0.12);
+
+  --priority-critical: #e5484d;
+  --priority-high: #f2a93b;
+  --priority-medium: #5b8def;
+  --priority-low: #6b7280;
+
+  --radius: 0.75rem;
+
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface-elevated);
+  --popover-foreground: var(--foreground);
+  --primary: var(--foreground);
+  --primary-foreground: var(--background);
+  --secondary: var(--surface-elevated);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--surface-elevated);
+  --accent: var(--surface-elevated);
+  --accent-foreground: var(--foreground);
+  --destructive: var(--status-active);
+  --border: var(--border-subtle);
+  --input: var(--border-strong);
+  --ring: var(--status-investigating);
+
+
+  --accent-teal: #2dd4bf;
+  --accent-amber: #fbbf24;
+  --accent-violet: #a78bfa;
+
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+  background-image:
+    radial-gradient(circle at 10% 0%, rgba(45, 212, 191, 0.06), transparent 40%),
+    radial-gradient(circle at 90% 10%, rgba(167, 139, 250, 0.06), transparent 40%),
+    radial-gradient(circle at 50% 100%, rgba(251, 191, 36, 0.04), transparent 50%);
+  background-attachment: fixed;
+}
+
+  html {
+    @apply font-sans;
+    color-scheme: dark;
+  }
+}
+
+
+/* Small gradient logo mark used in the sidebar */
+.brand-mark {
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, var(--accent-teal), var(--accent-violet));
+  flex-shrink: 0;
+}
+
+/* Priority pills -- colored chips instead of plain colored text, so
+   priority is scannable at a glance across a long alert list */
+.priority-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+.priority-pill-critical {
+  color: var(--priority-critical);
+  background: rgba(229, 72, 77, 0.14);
+}
+.priority-pill-high {
+  color: var(--priority-high);
+  background: rgba(242, 169, 59, 0.14);
+}
+.priority-pill-medium {
+  color: var(--priority-medium);
+  background: rgba(91, 141, 239, 0.14);
+}
+.priority-pill-low {
+  color: var(--priority-low);
+  background: rgba(107, 114, 128, 0.14);
+}
+
+
+/* --- Status utility classes: the single source of truth for alert color --- */
+.status-dot {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+.status-active { color: var(--status-active); }
+.status-active .status-dot, .dot-active { background: var(--status-active); }
+.status-acknowledged { color: var(--status-acknowledged); }
+.status-acknowledged .status-dot, .dot-acknowledged { background: var(--status-acknowledged); }
+.status-investigating { color: var(--status-investigating); }
+.status-investigating .status-dot, .dot-investigating { background: var(--status-investigating); }
+.status-resolved { color: var(--status-resolved); }
+.status-resolved .status-dot, .dot-resolved { background: var(--status-resolved); }
+.status-false_report { color: var(--status-false); }
+.status-false_report .status-dot, .dot-false_report { background: var(--status-false); }
+
+.priority-critical { color: var(--priority-critical); }
+.priority-high { color: var(--priority-high); }
+.priority-medium { color: var(--priority-medium); }
+.priority-low { color: var(--priority-low); }
+
+/* --- Pulse motif: connection-live indicator, used in the topbar and hero --- */
+@keyframes pulse-ring {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  70% { transform: scale(1.8); opacity: 0; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+.pulse-dot {
+  position: relative;
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: var(--status-resolved);
+}
+.pulse-dot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: var(--status-resolved);
+  animation: pulse-ring 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.pulse-dot.offline,
+.pulse-dot.offline::before {
+  background: var(--status-active);
+}
+
+@keyframes ecg-scroll {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -400; }
+}
+.ecg-line {
+  stroke-dasharray: 6 4;
+  animation: ecg-scroll 6s linear infinite;
+}
