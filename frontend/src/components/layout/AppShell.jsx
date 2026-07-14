@@ -10,9 +10,9 @@ import { cn } from "@/lib/utils";
 // this is most of the "sleek but multicolor" feel: color is used to help
 // wayfinding (which section am I in) rather than as pure decoration.
 const NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard", icon: Activity, accent: "var(--accent-teal)" },
-  { href: "/alerts", label: "Alerts", icon: ListChecks, accent: "var(--accent-amber)" },
-  { href: "/audit-logs", label: "Audit log", icon: ScrollText, accent: "var(--accent-violet)" },
+  { href: "/dashboard", label: "Dashboard", icon: Activity, accent: "hsl(var(--status-investigating))" },
+  { href: "/alerts", label: "Alerts", icon: ListChecks, accent: "hsl(var(--status-active))" },
+  { href: "/audit-logs", label: "Audit log", icon: ScrollText, accent: "hsl(var(--status-resolved))" },
 ];
 
 export default function AppShell({ children, connected = true }) {
@@ -78,7 +78,7 @@ export default function AppShell({ children, connected = true }) {
           <Radio
             className={cn(
               "size-3.5",
-              connected ? "text-[var(--status-resolved)]" : "text-[var(--status-active)]"
+              connected ? "text-[hsl(var(--status-resolved))]" : "text-[hsl(var(--status-active))]"
             )}
           />
           {connected ? "Live" : "Reconnecting..."}

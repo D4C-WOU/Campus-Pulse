@@ -15,6 +15,7 @@ from app.services.alert_service import (
     resolve_alert,
     false_report_alert,
     alert_to_dict,
+    list_alerts_paginated
 )
 
 router = APIRouter(prefix="/api/alerts", tags=["Alerts"])
@@ -26,11 +27,15 @@ async def create_new_alert(payload: AlertCreate, db: Session = Depends(get_db)):
     await manager.broadcast("NEW_ALERT", alert_to_dict(alert))
     return alert
 
-
 @router.get("/")
-def get_alerts(db: Session = Depends(get_db)):
-    return get_all_alerts(db)
-
+def get_alerts(
+    page: int = 1,
+    limit: int = 20,
+    status: str | None = None,
+    current_user=Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    return list_alerts_paginated(db, page=page, limit=limit, status=status)
 
 @router.get("/{alert_id}")
 def get_alert(alert_id: str, db: Session = Depends(get_db)):

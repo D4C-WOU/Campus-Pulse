@@ -61,29 +61,29 @@ function AlertCard({ alert, onAction, actingId }) {
 
   return (
     <div
-      className="rounded-2xl border border-border-subtle bg-surface p-5"
-      style={{
-        borderLeftWidth: 3,
-        borderLeftColor: `var(--priority-${alert.priority})`,
-      }}
+      // Added type-${alert.type} so the globals.css before-element border color triggers correctly
+      className={cn(
+        `ticket-card type-${alert.type}`,
+        "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:shadow-md"
+      )}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2 text-xs">
+          <div className="flex flex-wrap items-center gap-2 text-xs font-bold uppercase tracking-wider">
             <span className={priority?.className}>
               {priority?.label} priority
             </span>
-            <span className="text-muted-foreground">&middot;</span>
-            <span className="text-muted-foreground">{alert.type}</span>
+            <span className="text-slate-300">&middot;</span>
+            <span className={`type-${alert.type.toLowerCase()}`}>{alert.type}</span>
           </div>
-          <p className="mt-1.5 text-sm leading-snug">{alert.message}</p>
+          <p className="mt-2 text-base font-medium text-slate-900 leading-snug">{alert.message}</p>
         </div>
         <span
           className={cn(
-            "shrink-0 rounded-full px-2.5 py-1 text-xs font-medium",
+            "shrink-0 rounded-full px-3 py-1.5 text-xs font-bold shadow-sm",
             status.className
           )}
-          style={{ background: `var(--${status.className}-bg, transparent)` }}
+          style={{ background: `hsl(var(--${status.className}-bg))` }}
         >
           <span className="flex items-center gap-1.5">
             <span className={`status-dot ${status.dot}`} />
@@ -92,29 +92,33 @@ function AlertCard({ alert, onAction, actingId }) {
         </span>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-        <span className="flex items-center gap-1">
-          <MapPin className="size-3.5" />
+      <div className="mt-4 flex flex-wrap items-center gap-4 text-xs font-semibold text-slate-500">
+        <span className="flex items-center gap-1.5">
+          <MapPin className="size-4" />
           {alert.location_hint || "No location given"}
         </span>
-        <span className="flex items-center gap-1">
-          <Clock className="size-3.5" />
+        <span className="flex items-center gap-1.5">
+          <Clock className="size-4" />
           {timeAgo(alert.created_at)}
         </span>
       </div>
 
       {actions.length > 0 && (
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-5 flex flex-wrap gap-3 pt-4 border-t border-slate-100">
           {actions.map((action) => (
             <button
               key={action.key}
               disabled={isActing}
               onClick={() => onAction(alert.id, action.fn, action.label)}
               className={cn(
-                "rounded-lg px-3 py-1.5 text-xs font-medium transition-opacity disabled:opacity-50",
-                action.subtle
-                  ? "border border-border-subtle text-muted-foreground hover:border-border-strong hover:text-foreground"
-                  : "bg-surface-elevated text-foreground hover:bg-[var(--status-investigating-bg)]"
+                "rounded-lg px-5 py-2.5 text-sm font-bold transition-all shadow-sm disabled:opacity-50",
+                action.key === "ack"
+                  ? "bg-amber-500 text-white hover:bg-amber-600 hover:shadow-md border border-transparent"
+                  : action.key === "res"
+                    ? "bg-green-600 text-white hover:bg-green-700 hover:shadow-md border border-transparent"
+                    : action.subtle
+                      ? "border-2 border-slate-200 text-slate-600 bg-white hover:border-slate-300 hover:bg-slate-50"
+                      : "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md border border-transparent"
               )}
             >
               {action.label}
@@ -136,7 +140,7 @@ export default function AlertsPage() {
     try {
       setLoading(true);
       const data = await getAlerts();
-      setAlerts(data);
+      setAlerts(data.items);
     } catch {
       toast.error("Couldn't load alerts.");
     } finally {
@@ -182,21 +186,21 @@ export default function AlertsPage() {
     <ProtectedRoute>
       <AppShell connected={connected}>
         <div className="mx-auto max-w-4xl px-6 py-8">
-          <h1 className="text-xl font-medium">Alerts</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h1 className="text-2xl font-bold text-slate-900">Alerts</h1>
+          <p className="mt-1 text-sm font-medium text-slate-500">
             Every reported incident, updated in real time.
           </p>
 
-          <div className="mt-5 flex flex-wrap gap-2">
+          <div className="mt-6 flex flex-wrap gap-2">
             {STATUS_FILTERS.map((f) => (
               <button
                 key={f.value}
                 onClick={() => setStatusFilter(f.value)}
                 className={cn(
-                  "rounded-full px-3 py-1.5 text-xs transition-colors",
+                  "rounded-full px-4 py-2 text-sm font-bold transition-all",
                   statusFilter === f.value
-                    ? "bg-foreground text-background"
-                    : "border border-border-subtle text-muted-foreground hover:border-border-strong hover:text-foreground"
+                    ? "bg-slate-800 text-white shadow-md"
+                    : "border-2 border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
                 )}
               >
                 {f.label}
@@ -204,12 +208,12 @@ export default function AlertsPage() {
             ))}
           </div>
 
-          <div className="mt-6 space-y-3">
+          <div className="mt-8 space-y-4">
             {loading && (
-              <p className="text-sm text-muted-foreground">Loading alerts...</p>
+              <p className="text-sm font-medium text-slate-500">Loading alerts...</p>
             )}
             {!loading && filtered.length === 0 && (
-              <div className="rounded-2xl border border-dashed border-border-subtle p-8 text-center text-sm text-muted-foreground">
+              <div className="rounded-2xl border-2 border-dashed border-slate-200 p-12 text-center text-sm font-bold text-slate-500 bg-white">
                 No alerts match this filter.
               </div>
             )}

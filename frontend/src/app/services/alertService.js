@@ -1,11 +1,12 @@
 import api from "@/lib/axios";
 
 // Get all alerts
-export const getAlerts = async () => {
-  const res = await api.get("/api/alerts/");
-  return res.data;
+export const getAlerts = async (page = 1, limit = 20, status = null) => {
+  const params = { page, limit };
+  if (status) params.status = status;
+  const res = await api.get("/api/alerts/", { params });
+  return res.data; // { items, page, limit, total, pages }
 };
-
 // Get single alert
 export const getAlertById = async (id) => {
   const res = await api.get(`/api/alerts/${id}`);

@@ -40,3 +40,13 @@ export const PRIORITY_META = {
   medium: { label: "Medium", className: "priority-pill priority-pill-medium" },
   low: { label: "Low", className: "priority-pill priority-pill-low" },
 };
+
+export const TYPE_META = {
+  Fire: { label: "Fire", className: "type-fire", spine: "type-Fire" },
+  Medical: {
+    label: "Medical",
+    className: "type-medical",
+    spine: "type-Medical",
+  },
+  Safety: { label: "Safety", className: "type-safety", spine: "type-Safety" },
+};

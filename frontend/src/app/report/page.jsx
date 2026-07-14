@@ -65,7 +65,7 @@ export default function ReportPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-6">
         <div className="w-full max-w-md rounded-2xl border border-border-subtle bg-surface p-8 text-center">
-          <CheckCircle2 className="mx-auto size-10 text-[var(--status-resolved)]" />
+          <CheckCircle2 className="mx-auto size-10 text-[hsl(var(--status-resolved))]" />
           <h1 className="mt-4 text-xl font-medium">Report received</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Your incident has been logged and campus security has been
@@ -133,7 +133,7 @@ export default function ReportPage() {
                   className={cn(
                     "rounded-xl border p-3 text-left transition-colors",
                     type === t.value
-                      ? "border-[var(--status-active)] bg-[var(--status-active-bg)]"
+                      ? "border-[hsl(var(--status-active))] bg-[hsl(var(--status-active-bg))]"
                       : "border-border-subtle bg-surface hover:border-border-strong"
                   )}
                 >
@@ -155,7 +155,7 @@ export default function ReportPage() {
               onChange={(e) => setMessage(e.target.value)}
               rows={4}
               placeholder="e.g. Smoke coming from the second floor near the library entrance"
-              className="w-full resize-none rounded-xl border border-border-subtle bg-surface px-3.5 py-3 text-sm outline-none placeholder:text-muted-foreground focus:border-[var(--status-investigating)]"
+              className="w-full resize-none rounded-xl border border-border-subtle bg-surface px-3.5 py-3 text-sm outline-none placeholder:text-muted-foreground focus:border-[hsl(var(--status-investigating))]"
             />
           </div>
 
@@ -170,14 +170,14 @@ export default function ReportPage() {
               value={locationHint}
               onChange={(e) => setLocationHint(e.target.value)}
               placeholder="e.g. Block A, Library, Parking Lot 2"
-              className="w-full rounded-xl border border-border-subtle bg-surface px-3.5 py-3 text-sm outline-none placeholder:text-muted-foreground focus:border-[var(--status-investigating)]"
+              className="w-full rounded-xl border border-border-subtle bg-surface px-3.5 py-3 text-sm outline-none placeholder:text-muted-foreground focus:border-[hsl(var(--status-investigating))]"
             />
           </div>
 
           <button
             type="submit"
             disabled={submitting}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--status-active)] px-4 py-3.5 text-sm font-medium text-white transition-opacity disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[hsl(var(--status-active))] px-4 py-3.5 text-sm font-medium text-white transition-opacity disabled:opacity-60"
           >
             {submitting && <Loader2 className="size-4 animate-spin" />}
             {submitting ? "Submitting..." : "Submit report"}

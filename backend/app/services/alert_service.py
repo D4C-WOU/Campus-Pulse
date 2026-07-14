@@ -101,4 +101,26 @@ def false_report_alert(db, alert, admin_id):
 
     create_audit_log(db, admin_id, alert.id, "FALSE_REPORT")
 
-    return alert
+    return alert       
+
+
+def list_alerts_paginated(db: Session, page: int = 1, limit: int = 20, status: str | None = None):
+    query = db.query(Alert)
+    if status:
+        query = query.filter(Alert.status == status)
+
+    total = query.count()
+    items = (
+        query.order_by(Alert.created_at.desc())
+        .offset((page - 1) * limit)
+        .limit(limit)
+        .all()
+    )
+
+    return {
+        "items": items,
+        "page": page,
+        "limit": limit,
+        "total": total,
+        "pages": (total + limit - 1) // limit if total else 0,
+    }

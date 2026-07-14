@@ -1,86 +1,117 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Activity, ShieldCheck, ArrowRight } from "lucide-react";
+import { Flame, HeartPulse, ShieldAlert, ArrowRight, Activity } from "lucide-react";
+import { getAlerts } from "@/app/services/alertService"; // Added dynamic fetch
 
-async function getStatus() {
-  try {
-    const res = await fetch(
-      (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/health",
-      { cache: "no-store" }
-    );
-    if (!res.ok) return "offline";
-    const data = await res.json();
-    return data.status === "healthy" ? "online" : "offline";
-  } catch {
-    return "offline";
-  }
-}
+const TYPE_ICONS = {
+  Fire: Flame,
+  Medical: HeartPulse,
+  Safety: ShieldAlert,
+  Network: Activity,
+};
 
-export default async function Home() {
-  const status = await getStatus();
+export default function HomePage() {
+  const [liveQueue, setLiveQueue] = useState([]);
+
+  useEffect(() => {
+    async function fetchRecentAlerts() {
+      try {
+        const data = await getAlerts();
+        // Dynamically slice the 3 most recent incidents for the live queue
+        setLiveQueue(data.items.slice(0, 3));
+      } catch (error) {
+        console.error("Failed to fetch live queue data", error);
+      }
+    }
+    fetchRecentAlerts();
+  }, []);
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="min-h-screen bg-background">
       <header className="flex items-center justify-between px-6 py-5 md:px-10">
         <div className="flex items-center gap-2">
-          <Activity className="size-5 text-[var(--status-resolved)]" />
-          <span className="font-mono text-sm tracking-tight">
-            campus_pulse
-          </span>
+          <span className="h-2.5 w-2.5 rounded-full bg-[hsl(var(--status-investigating))] animate-pulse" />
+          <span className="font-data text-sm font-semibold">campus_pulse</span>
         </div>
-        <div className="flex items-center gap-2 rounded-full border border-border-subtle px-3 py-1 text-xs text-muted-foreground">
-          <span
-            className={`pulse-dot ${status !== "online" ? "offline" : ""}`}
-          />
-          <span className="font-mono">
-            {status === "online" ? "SYSTEM ONLINE" : "SYSTEM UNREACHABLE"}
-          </span>
-        </div>
+        {/* Updated: High-visibility Admin Sign-in Button */}
+        <Link
+          href="/login"
+          className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-slate-900 hover:shadow-md"
+        >
+          Admin sign in
+        </Link>
       </header>
 
-      <main className="flex flex-1 flex-col items-center justify-center px-6 text-center">
-        <svg
-          viewBox="0 0 400 60"
-          className="mb-6 h-10 w-64 text-[var(--status-resolved)] opacity-60"
-        >
-          <polyline
-            className="ecg-line"
-            points="0,30 60,30 80,10 100,50 120,30 400,30"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
-        </svg>
-
-        <h1 className="max-w-2xl text-balance font-mono text-3xl font-medium tracking-tight md:text-5xl">
-          Report an emergency in seconds.
+      <main className="mx-auto max-w-5xl px-6 pt-16 md:px-10">
+        <p className="font-data text-xs uppercase text-muted-foreground font-bold tracking-wider">
+          Campus incident response
+        </p>
+        <h1 className="font-display mt-3 max-w-2xl text-4xl font-bold leading-tight md:text-5xl text-slate-900">
+          Report it in seconds.
+          <br />
+          Watch it get handled.
         </h1>
-        <p className="mt-4 max-w-md text-balance text-muted-foreground">
-          No account, no sign-up. Tell us what's happening and where --
-          campus security sees it the moment you submit.
+        <p className="mt-4 max-w-md text-slate-600 font-medium">
+          Anonymous reporting for fire, medical, and safety incidents —
+          routed to campus responders the moment you submit.
         </p>
 
-        <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row">
+        <div className="mt-8 flex flex-wrap gap-4">
+          {/* Updated: Bold, high-contrast action button */}
           <Link
             href="/report"
-            className="group flex items-center gap-2 rounded-xl bg-[var(--status-active)] px-6 py-3.5 text-sm font-medium text-white shadow-lg shadow-[var(--status-active-bg)] transition-transform hover:scale-[1.02]"
+            className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-6 py-3.5 text-sm font-bold text-white shadow-md transition-all hover:bg-blue-700 hover:shadow-lg"
           >
-            Report an emergency
-            <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+            Report an incident
+            <ArrowRight className="size-4" />
           </Link>
-
+          {/* Updated: Crisp border for secondary action */}
           <Link
-            href="/login"
-            className="flex items-center gap-2 rounded-xl border border-border-subtle px-6 py-3.5 text-sm text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground"
+            href="/check-status"
+            className="rounded-xl border-2 border-slate-300 bg-white px-6 py-3.5 text-sm font-bold text-slate-700 shadow-sm transition-all hover:border-slate-400 hover:bg-slate-50"
           >
-            <ShieldCheck className="size-4" />
-            Admin sign in
+            Check report status
           </Link>
         </div>
-      </main>
 
-      <footer className="px-6 py-6 text-center text-xs text-muted-foreground">
-        Campus Pulse -- real-time incident reporting &amp; response
-      </footer>
+        <div className="mt-16 space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="font-data text-xs uppercase text-slate-500 font-bold tracking-wider">
+              Live queue — Recent
+            </p>
+          </div>
+
+          {/* Updated: Dynamic mapping matching incident types to globals.css color classes */}
+          {liveQueue.map((alert) => {
+            const Icon = TYPE_ICONS[alert.type] || ShieldAlert;
+            return (
+              <div
+                key={alert.code || alert.id}
+                className={`ticket-card type-${alert.type} severity-${alert.severity || 'medium'} flex items-center gap-4 py-4 pr-4 bg-white`}
+              >
+                <div className={`p-2 rounded-full bg-type-${alert.type.toLowerCase()} bg-opacity-20`}>
+                  <Icon className={`size-5 type-${alert.type.toLowerCase()}`} />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-slate-900">{alert.type}</span>
+                    <span className="font-data text-xs text-slate-400">#{alert.code || alert.id.substring(0, 8).toUpperCase()}</span>
+                  </div>
+                  <p className="mt-0.5 text-sm font-medium text-slate-600">{alert.message || alert.note}</p>
+                </div>
+              </div>
+            );
+          })}
+
+          {liveQueue.length === 0 && (
+            <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm font-medium text-slate-500">
+              No recent incidents in the queue.
+            </div>
+          )}
+        </div>
+      </main>
     </div>
   );
 }
