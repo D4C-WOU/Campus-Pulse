@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import ProtectedRoute from "@/app/components/auth/ProtectedRoute";
 import AppShell from "@/components/layout/AppShell";
+import Pagination from "@/components/layout/Pagination";
 import { getAuditLogs } from "@/app/services/auditService";
 import { useAlertsSocket } from "@/hooks/useAlertsSocket";
 
@@ -26,15 +27,27 @@ export default function AuditLogsPage() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
 
   const { connected } = useAlertsSocket();
 
   useEffect(() => {
-    getAuditLogs()
-      .then(setLogs)
-      .catch(() => setError(true))
+    setLoading(true);
+    setError(false);
+
+    getAuditLogs(page, 10)
+      .then((data) => {
+        setLogs(data.items ?? []);
+        setPages(data.pages ?? 1);
+      })
+      .catch(() => {
+        setLogs([]);
+        setPages(1);
+        setError(true);
+      })
       .finally(() => setLoading(false));
-  }, []);
+  }, [page]);
 
   return (
     <ProtectedRoute requiredRole="super_admin">
@@ -46,21 +59,14 @@ export default function AuditLogsPage() {
           </p>
 
           <div className="mt-6 overflow-hidden rounded-2xl border border-border-subtle bg-surface">
-            {loading && (
-              <p className="px-5 py-6 text-sm text-muted-foreground">
-                Loading...
-              </p>
-            )}
+            {loading && <p className="px-5 py-6 text-sm text-muted-foreground">Loading...</p>}
             {error && (
               <p className="px-5 py-6 text-sm text-muted-foreground">
-                You need super admin access to view this, or the request
-                failed.
+                You need super admin access to view this, or the request failed.
               </p>
             )}
             {!loading && !error && logs.length === 0 && (
-              <p className="px-5 py-6 text-sm text-muted-foreground">
-                No administrative actions recorded yet.
-              </p>
+              <p className="px-5 py-6 text-sm text-muted-foreground">No administrative actions recorded yet.</p>
             )}
             {!loading && logs.length > 0 && (
               <table className="w-full text-left text-sm">
@@ -75,17 +81,11 @@ export default function AuditLogsPage() {
                 <tbody className="divide-y divide-border-subtle">
                   {logs.map((log) => (
                     <tr key={log.id}>
-                      <td className="px-5 py-3">
-                        {ACTION_LABELS[log.action] || log.action}
-                      </td>
+                      <td className="px-5 py-3">{ACTION_LABELS[log.action] || log.action}</td>
                       <td className="px-5 py-3 font-mono text-xs text-muted-foreground">
-                        {log.alert_type
-                          ? `${log.alert_type} · ${log.alert_id?.slice(0, 8)}`
-                          : "—"}
+                        {log.alert_type ? `${log.alert_type} · ${log.alert_id?.slice(0, 8)}` : "—"}
                       </td>
-                      <td className="px-5 py-3 text-muted-foreground">
-                        {log.admin_email || "—"}
-                      </td>
+                      <td className="px-5 py-3 text-muted-foreground">{log.admin_email || "—"}</td>
                       <td className="px-5 py-3 font-mono text-xs text-muted-foreground">
                         {formatTime(log.created_at)}
                       </td>
@@ -95,6 +95,8 @@ export default function AuditLogsPage() {
               </table>
             )}
           </div>
+
+          <Pagination page={page} pages={pages} onPageChange={setPage} />
         </div>
       </AppShell>
     </ProtectedRoute>

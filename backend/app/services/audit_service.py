@@ -6,7 +6,11 @@ from app.models.alert import Alert
 
 
 def create_audit_log(db: Session, admin_id: str, alert_id: str, action: str):
-    log = AuditLog(admin_id=admin_id, alert_id=alert_id, action=action)
+    log = AuditLog(
+        admin_id=admin_id,
+        alert_id=alert_id,
+        action=action,
+    )
 
     db.add(log)
     db.commit()
@@ -15,12 +19,12 @@ def create_audit_log(db: Session, admin_id: str, alert_id: str, action: str):
     return log
 
 
-def get_all_audit_logs(db: Session, limit: int = 200):
+def get_all_audit_logs(db: Session, page: int = 1, limit: int = 10):
     """
-    Newest first, with admin email and alert type resolved so the frontend
-    doesn't have to do N+1 lookups just to render a readable table.
+    Returns paginated audit logs with resolved admin email and alert type.
     """
-    rows = (
+
+    base_query = (
         db.query(
             AuditLog.id,
             AuditLog.admin_id,
@@ -32,9 +36,21 @@ def get_all_audit_logs(db: Session, limit: int = 200):
         )
         .outerjoin(User, User.id == AuditLog.admin_id)
         .outerjoin(Alert, Alert.id == AuditLog.alert_id)
-        .order_by(AuditLog.created_at.desc())
+    )
+
+    total = base_query.count()
+
+    rows = (
+        base_query.order_by(AuditLog.created_at.desc())
+        .offset((page - 1) * limit)
         .limit(limit)
         .all()
     )
 
-    return [dict(row._mapping) for row in rows]
+    return {
+        "items": [dict(row._mapping) for row in rows],
+        "page": page,
+        "limit": limit,
+        "total": total,
+        "pages": (total + limit - 1) // limit if total else 1,
+    }

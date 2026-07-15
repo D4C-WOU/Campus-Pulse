@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.core.dependencies import require_admin
+from app.core.dependencies import require_dispatcher
 from app.schemas.comment import CommentCreate, CommentResponse
 from app.services.comment_service import list_comments, add_comment
 
@@ -10,7 +10,7 @@ router = APIRouter(prefix="/api/alerts", tags=["Comments"])
 
 
 @router.get("/{alert_id}/comments", response_model=list[CommentResponse])
-def get_comments(alert_id: str, current_user=Depends(require_admin), db: Session = Depends(get_db)):
+def get_comments(alert_id: str, current_user=Depends(require_dispatcher), db: Session = Depends(get_db)):
     return list_comments(db, alert_id)
 
 
@@ -18,7 +18,7 @@ def get_comments(alert_id: str, current_user=Depends(require_admin), db: Session
 def post_comment(
     alert_id: str,
     payload: CommentCreate,
-    current_user=Depends(require_admin),
+    current_user=Depends(require_dispatcher),
     db: Session = Depends(get_db),
 ):
     comment = add_comment(db, alert_id, current_user.id, payload.comment)

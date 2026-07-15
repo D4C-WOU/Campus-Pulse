@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.schemas.alert import AlertCreate
-from app.core.dependencies import require_admin
+from app.core.dependencies import require_dispatcher
 from app.models.user import User
 from app.websocket.connection_manager import manager
 from app.services.alert_service import (
@@ -32,7 +32,7 @@ def get_alerts(
     page: int = 1,
     limit: int = 20,
     status: str | None = None,
-    current_user=Depends(require_admin),
+    current_user=Depends(require_dispatcher),
     db: Session = Depends(get_db),
 ):
     return list_alerts_paginated(db, page=page, limit=limit, status=status)
@@ -48,7 +48,7 @@ def get_alert(alert_id: str, db: Session = Depends(get_db)):
 @router.patch("/{alert_id}/acknowledge")
 async def acknowledge(
     alert_id: str,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_dispatcher),
     db: Session = Depends(get_db),
 ):
     alert = get_alert_by_id(db, alert_id)
@@ -66,7 +66,7 @@ async def acknowledge(
 @router.patch("/{alert_id}/investigate")
 async def investigate(
     alert_id: str,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_dispatcher),
     db: Session = Depends(get_db),
 ):
     alert = get_alert_by_id(db, alert_id)
@@ -84,7 +84,7 @@ async def investigate(
 @router.patch("/{alert_id}/resolve")
 async def resolve(
     alert_id: str,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_dispatcher),
     db: Session = Depends(get_db),
 ):
     alert = get_alert_by_id(db, alert_id)
@@ -102,7 +102,7 @@ async def resolve(
 @router.patch("/{alert_id}/false-report")
 async def false_report(
     alert_id: str,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_dispatcher),
     db: Session = Depends(get_db),
 ):
     alert = get_alert_by_id(db, alert_id)
