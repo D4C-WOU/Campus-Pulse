@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Flame, HeartPulse, ShieldAlert, ArrowRight, Activity } from "lucide-react";
-import { getAlerts } from "@/app/services/alertService"; // Added dynamic fetch
+import { getLatestPublicAlerts } from "@/app/services/publicService";
 
 const TYPE_ICONS = {
   Fire: Flame,
@@ -18,9 +18,8 @@ export default function HomePage() {
   useEffect(() => {
     async function fetchRecentAlerts() {
       try {
-        const data = await getAlerts();
-        // Dynamically slice the 3 most recent incidents for the live queue
-        setLiveQueue(data.items.slice(0, 3));
+        const data = await getLatestPublicAlerts();
+        setLiveQueue(data);
       } catch (error) {
         console.error("Failed to fetch live queue data", error);
       }
@@ -88,18 +87,23 @@ export default function HomePage() {
             const Icon = TYPE_ICONS[alert.type] || ShieldAlert;
             return (
               <div
-                key={alert.code || alert.id}
-                className={`ticket-card type-${alert.type} severity-${alert.severity || 'medium'} flex items-center gap-4 py-4 pr-4 bg-white`}
-              >
+                key={alert.reference}
+                className={`ticket-card type-${alert.type} flex items-center gap-4 py-4 pr-4 bg-white`}>
                 <div className={`p-2 rounded-full bg-type-${alert.type.toLowerCase()} bg-opacity-20`}>
                   <Icon className={`size-5 type-${alert.type.toLowerCase()}`} />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold text-slate-900">{alert.type}</span>
-                    <span className="font-data text-xs text-slate-400">#{alert.code || alert.id.substring(0, 8).toUpperCase()}</span>
+                    <span className="font-data text-xs text-slate-400">##{alert.reference}</span>
+                    <span className="rounded-full bg-[hsl(var(--status-active)/0.12)] px-2 py-0.5 text-xs font-medium text-[hsl(var(--status-active))]">
+                      {alert.status.replace("_", " ")}
+                    </span>
+
                   </div>
-                  <p className="mt-0.5 text-sm font-medium text-slate-600">{alert.message || alert.note}</p>
+                  <p className="mt-0.5 text-sm font-medium text-slate-600">
+                    {alert.location_hint}
+                  </p>
                 </div>
               </div>
             );

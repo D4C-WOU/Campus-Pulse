@@ -6,6 +6,8 @@ import { checkAlertStatus } from "@/app/services/publicService";
 import { formatRelativeTime } from "@/lib/utils";
 import { STATUS_META } from "@/lib/alertMeta";
 import { Search } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 export default function CheckStatusPage() {
   const [reference, setReference] = useState("");
@@ -30,6 +32,13 @@ export default function CheckStatusPage() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6">
+      <Link
+        href="/"
+        className="inline-flex mb-0 items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="size-4" />
+        Back to home
+      </Link>
       <h1 className="text-xl font-medium">Check report status</h1>
       <p className="mt-1 text-sm text-muted-foreground">
         Enter the reference number you received when you submitted a report.
@@ -62,7 +71,36 @@ export default function CheckStatusPage() {
             </span>
           </div>
           {result.location_hint && (
-            <p className="mt-2 text-sm text-muted-foreground">{result.location_hint}</p>
+            <div className="mt-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Location
+              </p>
+              <p className="mt-1 text-sm">
+                {result.location_hint}
+              </p>
+            </div>
+          )}
+
+          {result.message && (
+            <div className="mt-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Report
+              </p>
+              <p className="mt-1 text-sm">
+                {result.message}
+              </p>
+            </div>
+          )}
+
+          {result.latest_comment && (
+            <div className="mt-4 rounded-xl border border-border-subtle bg-muted/40 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Latest update
+              </p>
+              <p className="mt-2 text-sm">
+                {result.latest_comment}
+              </p>
+            </div>
           )}
           <p className="mt-3 text-xs text-muted-foreground">
             Reported {formatRelativeTime(result.created_at)}
