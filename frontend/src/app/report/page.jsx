@@ -6,25 +6,11 @@ import { createAlert } from "@/app/services/alertService";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { INCIDENT_CATEGORIES } from "@/lib/incidentCategories";
 
-const INCIDENT_TYPES = [
-  {
-    value: "Fire",
-    label: "🔥 Fire",
-    hint: "Smoke, flames or fire emergency",
-  },
-  {
-    value: "Medical",
-    label: "🚑 Medical",
-    hint: "Injury, illness or medical emergency",
-  },
-  {
-    value: "Safety",
-    label: "🛡️ Safety",
-    hint: "Violence, suspicious activity or hazard",
-  },
-];
-
+const INCIDENT_TYPES = [{ value: "Fire", label: "🔥 Fire", hint: "Smoke, flames or fire emergency", },
+{ value: "Medical", label: "🚑 Medical", hint: "Injury, illness or medical emergency", },
+{ value: "Safety", label: "🛡️ Safety", hint: "Violence, suspicious activity or hazard", },];
 
 export default function ReportPage() {
   const [type, setType] = useState("");
@@ -32,6 +18,12 @@ export default function ReportPage() {
   const [locationHint, setLocationHint] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(null); // holds created alert
+  const [category, setCategory] = useState("");
+
+  const handleTypeChange = (selectedType) => {
+    setType(selectedType);
+    setCategory("");
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -44,12 +36,17 @@ export default function ReportPage() {
       toast.error("Describe what's happening so responders know what to expect.");
       return;
     }
+    if (!category) {
+      toast.error("Select the incident category.");
+      return;
+    }
 
     try {
       setSubmitting(true);
       const alert = await createAlert({
         type,
-        message: message.trim(),
+        message: `[${category}]
+        ${message.trim()}`,
         location_hint: locationHint.trim() || null,
         priority: "medium",
       });
@@ -82,6 +79,7 @@ export default function ReportPage() {
               onClick={() => {
                 setSubmitted(null);
                 setType("");
+                setCategory("");
                 setMessage("");
                 setLocationHint("");
               }}
@@ -129,7 +127,7 @@ export default function ReportPage() {
                 <button
                   type="button"
                   key={t.value}
-                  onClick={() => setType(t.value)}
+                  onClick={() => handleTypeChange(t.value)}
                   className={cn(
                     "rounded-xl border p-3 text-left transition-colors",
                     type === t.value
@@ -144,6 +142,28 @@ export default function ReportPage() {
                 </button>
               ))}
             </div>
+          </div>
+          <div>
+            <label className="mb-2 block text-sm font-medium">
+              Incident category
+            </label>
+
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              disabled={!type}
+              className="w-full rounded-xl border border-border-subtle bg-surface px-3.5 py-3 text-sm outline-none focus:border-[hsl(var(--status-investigating))] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <option value="">
+                {type ? "Select category..." : "Choose an emergency type first"}
+              </option>
+
+              {(INCIDENT_CATEGORIES[type] || []).map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
