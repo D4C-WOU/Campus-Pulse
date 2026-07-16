@@ -10,7 +10,6 @@ from app.services.alert_service import (
     create_alert,
     get_all_alerts,
     get_alert_by_id,
-    acknowledge_alert,
     investigate_alert,
     resolve_alert,
     false_report_alert,
@@ -43,24 +42,6 @@ def get_alert(alert_id: str, db: Session = Depends(get_db)):
     if not alert:
         raise HTTPException(status_code=404, detail="Alert not found")
     return alert
-
-
-@router.patch("/{alert_id}/acknowledge")
-async def acknowledge(
-    alert_id: str,
-    current_user: User = Depends(require_dispatcher),
-    db: Session = Depends(get_db),
-):
-    alert = get_alert_by_id(db, alert_id)
-    if not alert:
-        raise HTTPException(status_code=404, detail="Alert not found")
-
-    updated = acknowledge_alert(db, alert, current_user.id)
-    if not updated:
-        raise HTTPException(status_code=400, detail="Invalid state transition")
-
-    await manager.broadcast("ALERT_ACKNOWLEDGED", alert_to_dict(updated))
-    return updated
 
 
 @router.patch("/{alert_id}/investigate")

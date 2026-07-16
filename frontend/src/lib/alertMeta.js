@@ -9,11 +9,6 @@ export const STATUS_META = {
     className: "status-active",
     dot: "dot-active",
   },
-  acknowledged: {
-    label: "Acknowledged",
-    className: "status-acknowledged",
-    dot: "dot-acknowledged",
-  },
   investigating: {
     label: "Investigating",
     className: "status-investigating",

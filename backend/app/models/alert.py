@@ -39,7 +39,6 @@ class Alert(Base):
     status = Column(
         Enum(
             "active",
-            "acknowledged",
             "investigating",
             "resolved",
             "false_report"

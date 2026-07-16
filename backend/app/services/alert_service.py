@@ -50,21 +50,8 @@ def get_alert_by_id(db: Session, alert_id: str):
     return db.query(Alert).filter(Alert.id == alert_id).first()
 
 
-def acknowledge_alert(db, alert, admin_id):
-    if alert.status != "active":
-        return None
-
-    alert.status = "acknowledged"
-    db.commit()
-    db.refresh(alert)
-
-    create_audit_log(db, admin_id, alert.id, "ALERT_ACKNOWLEDGED")
-
-    return alert
-
-
 def investigate_alert(db, alert, admin_id):
-    if alert.status != "acknowledged":
+    if alert.status != "active":
         return None
 
     alert.status = "investigating"
@@ -77,7 +64,7 @@ def investigate_alert(db, alert, admin_id):
 
 
 def resolve_alert(db, alert, admin_id):
-    if alert.status not in ["acknowledged", "investigating"]:
+    if alert.status != "investigating":
         return None
 
     alert.status = "resolved"
@@ -104,7 +91,7 @@ def false_report_alert(db, alert, admin_id):
     return alert       
 
 
-def list_alerts_paginated(db: Session, page: int = 1, limit: int = 20, status: str | None = None):
+def list_alerts_paginated(db: Session, page: int = 1, limit: int = 10, status: str | None = None):
     query = db.query(Alert)
     if status:
         query = query.filter(Alert.status == status)

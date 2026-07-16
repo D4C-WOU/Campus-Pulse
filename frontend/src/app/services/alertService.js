@@ -19,12 +19,6 @@ export const createAlert = async (payload) => {
   return res.data;
 };
 
-// Acknowledge alert
-export const acknowledgeAlert = async (id) => {
-  const res = await api.patch(`/api/alerts/${id}/acknowledge`);
-  return res.data;
-};
-
 // Investigate alert
 export const investigateAlert = async (id) => {
   const res = await api.patch(`/api/alerts/${id}/investigate`);
