@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.models.alert import Alert
 from app.services.audit_service import create_audit_log
+from app.services.notification_service import create_notification
 
 
 def alert_to_dict(alert: Alert) -> dict:
@@ -38,6 +39,13 @@ def create_alert(db: Session, payload):
     db.add(alert)
     db.commit()
     db.refresh(alert)
+    create_notification(
+    db=db,
+    title="New Alert",
+    message=f"{alert.type} reported near {alert.location_hint}",
+    type="alert_created",
+    alert_id=alert.id,
+)
 
     return alert
 
@@ -71,6 +79,13 @@ def resolve_alert(db, alert, admin_id):
     alert.resolved_at = datetime.utcnow()
     db.commit()
     db.refresh(alert)
+    create_notification(
+    db=db,
+    title="Alert Resolved",
+    message=f"{alert.type} at {alert.location_hint} has been resolved",
+    type="alert_resolved",
+    alert_id=alert.id,
+)
 
     create_audit_log(db, admin_id, alert.id, "ALERT_RESOLVED")
 
@@ -85,6 +100,13 @@ def false_report_alert(db, alert, admin_id):
     alert.is_false_report = True
     db.commit()
     db.refresh(alert)
+    create_notification(
+    db=db,
+    title="False Report",
+    message=f"{alert.type} at {alert.location_hint} was marked as a false report",
+    type="false_report",
+    alert_id=alert.id,
+)
 
     create_audit_log(db, admin_id, alert.id, "FALSE_REPORT")
 
