@@ -4,20 +4,83 @@ import { useState } from "react";
 import Link from "next/link";
 import { createAlert } from "@/app/services/alertService";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Loader2,
+  AlertTriangle,
+  Copy,
+  Check,
+} from "lucide-react";
 import { toast } from "sonner";
 import { INCIDENT_CATEGORIES } from "@/lib/incidentCategories";
 
-const INCIDENT_TYPES = [{ value: "Fire", label: "🔥 Fire", hint: "Smoke, flames or fire emergency", },
-{ value: "Medical", label: "🚑 Medical", hint: "Injury, illness or medical emergency", },
-{ value: "Safety", label: "🛡️ Safety", hint: "Violence, suspicious activity or hazard", },];
+const INCIDENT_TYPES = [
+  { value: "Fire", label: "🔥 Fire", hint: "Smoke, flames or fire emergency" },
+  { value: "Medical", label: "🚑 Medical", hint: "Injury, illness or medical emergency" },
+  { value: "Safety", label: "🛡️ Safety", hint: "Violence, suspicious activity or hazard" },
+];
+
+function TrackingCodeBox({ code }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(code).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <div className="mt-6 rounded-xl border-2 border-[hsl(var(--status-active))] bg-[hsl(var(--status-active-bg))] p-4">
+      <div className="flex items-start gap-3">
+        <AlertTriangle className="mt-0.5 size-4 shrink-0 text-[hsl(var(--status-active))]" />
+        <div className="flex-1">
+          <p className="text-sm font-semibold text-[hsl(var(--status-active))]">
+            Save your tracking code now
+          </p>
+          <p className="mt-1 text-xs text-[hsl(var(--status-active))]">
+            This code cannot be recovered if lost. Copy and save it somewhere safe.
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 flex items-center gap-2 rounded-lg border border-[hsl(var(--status-active)/0.3)] bg-white/60 px-4 py-3">
+        <span className="flex-1 font-mono text-lg font-bold tracking-widest text-foreground">
+          {code}
+        </span>
+        <button
+          onClick={handleCopy}
+          className={cn(
+            "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
+            copied
+              ? "bg-[hsl(var(--status-resolved))] text-white"
+              : "bg-foreground text-background hover:opacity-80"
+          )}
+        >
+          {copied ? (
+            <>
+              <Check className="size-3.5" />
+              Copied!
+            </>
+          ) : (
+            <>
+              <Copy className="size-3.5" />
+              Copy code
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function ReportPage() {
   const [type, setType] = useState("");
   const [message, setMessage] = useState("");
   const [locationHint, setLocationHint] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(null); // holds created alert
+  const [submitted, setSubmitted] = useState(null);
   const [category, setCategory] = useState("");
 
   const handleTypeChange = (selectedType) => {
@@ -45,13 +108,12 @@ export default function ReportPage() {
       setSubmitting(true);
       const alert = await createAlert({
         type,
-        message: `[${category}]
-        ${message.trim()}`,
+        message: `[${category}]\n\n${message.trim()}`,
         location_hint: locationHint.trim() || null,
         priority: "medium",
       });
       setSubmitted(alert);
-    } catch (err) {
+    } catch {
       toast.error("Couldn't submit the report. Please try again.");
     } finally {
       setSubmitting(false);
@@ -59,22 +121,32 @@ export default function ReportPage() {
   };
 
   if (submitted) {
+    const trackingCode = submitted.id?.slice(0, 8).toUpperCase();
+
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-6">
-        <div className="w-full max-w-md rounded-2xl border border-border-subtle bg-surface p-8 text-center">
-          <CheckCircle2 className="mx-auto size-10 text-[hsl(var(--status-resolved))]" />
-          <h1 className="mt-4 text-xl font-medium">Report received</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Your incident has been logged and campus security has been
-            notified.
-          </p>
-          <div className="mt-6 rounded-lg border border-border-subtle bg-surface-elevated px-4 py-3">
-            <div className="text-xs text-muted-foreground">Reference</div>
-            <div className="font-mono text-sm">
-              {submitted.id?.slice(0, 8)}
-            </div>
+        <div className="w-full max-w-md rounded-2xl border border-border-subtle bg-surface p-8">
+          <div className="flex flex-col items-center text-center">
+            <CheckCircle2 className="size-10 text-[hsl(var(--status-resolved))]" />
+            <h1 className="mt-4 text-xl font-medium">Report received</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Your incident has been logged and campus security has been notified.
+            </p>
           </div>
-          <div className="mt-8 flex flex-col gap-2">
+
+          <TrackingCodeBox code={trackingCode} />
+
+          <div className="mt-6 rounded-lg border border-border-subtle bg-surface-elevated px-4 py-3 text-center">
+            <p className="text-xs text-muted-foreground">
+              Use this code on the{" "}
+              <Link href="/check-status" className="font-medium underline underline-offset-2 hover:text-foreground">
+                Check Status
+              </Link>{" "}
+              page to track your report.
+            </p>
+          </div>
+
+          <div className="mt-6 flex flex-col gap-2">
             <button
               onClick={() => {
                 setSubmitted(null);
@@ -89,7 +161,7 @@ export default function ReportPage() {
             </button>
             <Link
               href="/"
-              className="text-xs text-muted-foreground hover:text-foreground"
+              className="text-center text-xs text-muted-foreground hover:text-foreground"
             >
               Back to home
             </Link>
@@ -110,18 +182,23 @@ export default function ReportPage() {
           Home
         </Link>
 
-        <h1 className="text-2xl font-medium tracking-tight">
-          Report an emergency
-        </h1>
+        <h1 className="text-2xl font-medium tracking-tight">Report an emergency</h1>
         <p className="mt-1.5 text-sm text-muted-foreground">
           This report is anonymous. No account needed.
         </p>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+        {/* Pre-submission tracking code warning */}
+        <div className="mt-4 flex items-start gap-2 rounded-xl border border-[hsl(var(--status-acknowledged)/0.4)] bg-[hsl(var(--status-acknowledged-bg))] px-4 py-3">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-[hsl(var(--status-acknowledged))]" />
+          <p className="text-xs text-[hsl(var(--status-acknowledged))]">
+            <span className="font-semibold">Save your tracking code</span> — after submitting you'll
+            receive a unique code. Copy it immediately; it cannot be recovered if lost.
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="mt-6 space-y-6">
           <div>
-            <label className="mb-2 block text-sm font-medium">
-              What's happening?
-            </label>
+            <label className="mb-2 block text-sm font-medium">What's happening?</label>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               {INCIDENT_TYPES.map((t) => (
                 <button
@@ -136,18 +213,14 @@ export default function ReportPage() {
                   )}
                 >
                   <div className="text-sm font-medium">{t.label}</div>
-                  <div className="mt-0.5 text-xs text-muted-foreground">
-                    {t.hint}
-                  </div>
+                  <div className="mt-0.5 text-xs text-muted-foreground">{t.hint}</div>
                 </button>
               ))}
             </div>
           </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium">
-              Incident category
-            </label>
 
+          <div>
+            <label className="mb-2 block text-sm font-medium">Incident category</label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
@@ -157,7 +230,6 @@ export default function ReportPage() {
               <option value="">
                 {type ? "Select category..." : "Choose an emergency type first"}
               </option>
-
               {(INCIDENT_CATEGORIES[type] || []).map((item) => (
                 <option key={item} value={item}>
                   {item}
@@ -167,9 +239,7 @@ export default function ReportPage() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium">
-              Describe the situation
-            </label>
+            <label className="mb-2 block text-sm font-medium">Describe the situation</label>
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
@@ -181,10 +251,7 @@ export default function ReportPage() {
 
           <div>
             <label className="mb-2 block text-sm font-medium">
-              Location{" "}
-              <span className="font-normal text-muted-foreground">
-                (optional)
-              </span>
+              Location <span className="font-normal text-muted-foreground">(optional)</span>
             </label>
             <input
               value={locationHint}

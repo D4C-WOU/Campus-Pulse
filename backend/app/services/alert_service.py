@@ -9,7 +9,6 @@ from app.services.notification_service import create_notification
 
 
 def alert_to_dict(alert: Alert) -> dict:
-    """Shared serializer so REST responses and WebSocket broadcasts never drift apart."""
     return {
         "id": alert.id,
         "type": alert.type,
@@ -25,6 +24,18 @@ def alert_to_dict(alert: Alert) -> dict:
     }
 
 
+def notification_to_dict(notification) -> dict:
+    return {
+        "id": notification.id,
+        "title": notification.title,
+        "message": notification.message,
+        "type": notification.type,
+        "is_read": notification.is_read,
+        "alert_id": notification.alert_id,
+        "created_at": str(notification.created_at),
+    }
+
+
 def create_alert(db: Session, payload):
     alert = Alert(
         id=str(uuid.uuid4()),
@@ -35,18 +46,20 @@ def create_alert(db: Session, payload):
         status="active",
         reported_by="anonymous",
     )
-
     db.add(alert)
     db.commit()
     db.refresh(alert)
-    create_notification(
-    db=db,
-    title="New Alert",
-    message=f"{alert.type} reported near {alert.location_hint}",
-    type="alert_created",
-    alert_id=alert.id,
-)
 
+    notification = create_notification(
+        db=db,
+        title="New Alert",
+        message=f"{alert.type} reported near {alert.location_hint}",
+        type="alert_created",
+        alert_id=alert.id,
+    )
+
+    # Return both so the route can broadcast the notification event
+    alert._new_notification = notification
     return alert
 
 
@@ -65,9 +78,7 @@ def investigate_alert(db, alert, admin_id):
     alert.status = "investigating"
     db.commit()
     db.refresh(alert)
-
     create_audit_log(db, admin_id, alert.id, "ALERT_INVESTIGATING")
-
     return alert
 
 
@@ -79,16 +90,17 @@ def resolve_alert(db, alert, admin_id):
     alert.resolved_at = datetime.utcnow()
     db.commit()
     db.refresh(alert)
-    create_notification(
-    db=db,
-    title="Alert Resolved",
-    message=f"{alert.type} at {alert.location_hint} has been resolved",
-    type="alert_resolved",
-    alert_id=alert.id,
-)
+
+    notification = create_notification(
+        db=db,
+        title="Alert Resolved",
+        message=f"{alert.type} at {alert.location_hint} has been resolved",
+        type="alert_resolved",
+        alert_id=alert.id,
+    )
+    alert._new_notification = notification
 
     create_audit_log(db, admin_id, alert.id, "ALERT_RESOLVED")
-
     return alert
 
 
@@ -100,17 +112,18 @@ def false_report_alert(db, alert, admin_id):
     alert.is_false_report = True
     db.commit()
     db.refresh(alert)
-    create_notification(
-    db=db,
-    title="False Report",
-    message=f"{alert.type} at {alert.location_hint} was marked as a false report",
-    type="false_report",
-    alert_id=alert.id,
-)
+
+    notification = create_notification(
+        db=db,
+        title="False Report",
+        message=f"{alert.type} at {alert.location_hint} was marked as a false report",
+        type="false_report",
+        alert_id=alert.id,
+    )
+    alert._new_notification = notification
 
     create_audit_log(db, admin_id, alert.id, "FALSE_REPORT")
-
-    return alert       
+    return alert
 
 
 def list_alerts_paginated(db: Session, page: int = 1, limit: int = 10, status: str | None = None):

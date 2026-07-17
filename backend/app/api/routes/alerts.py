@@ -6,15 +6,16 @@ from app.schemas.alert import AlertCreate
 from app.core.dependencies import require_super_admin
 from app.models.user import User
 from app.websocket.connection_manager import manager
+from app.websocket.status_manager import status_manager
 from app.services.alert_service import (
     create_alert,
-    get_all_alerts,
     get_alert_by_id,
     investigate_alert,
     resolve_alert,
     false_report_alert,
     alert_to_dict,
-    list_alerts_paginated
+    notification_to_dict,
+    list_alerts_paginated,
 )
 
 router = APIRouter(prefix="/api/alerts", tags=["Alerts"])
@@ -24,7 +25,10 @@ router = APIRouter(prefix="/api/alerts", tags=["Alerts"])
 async def create_new_alert(payload: AlertCreate, db: Session = Depends(get_db)):
     alert = create_alert(db, payload)
     await manager.broadcast("NEW_ALERT", alert_to_dict(alert))
+    if hasattr(alert, "_new_notification") and alert._new_notification:
+        await manager.broadcast("NEW_NOTIFICATION", notification_to_dict(alert._new_notification))
     return alert
+
 
 @router.get("/")
 def get_alerts(
@@ -35,6 +39,7 @@ def get_alerts(
     db: Session = Depends(get_db),
 ):
     return list_alerts_paginated(db, page=page, limit=limit, status=status)
+
 
 @router.get("/{alert_id}")
 def get_alert(alert_id: str, db: Session = Depends(get_db)):
@@ -53,12 +58,11 @@ async def investigate(
     alert = get_alert_by_id(db, alert_id)
     if not alert:
         raise HTTPException(status_code=404, detail="Alert not found")
-
     updated = investigate_alert(db, alert, current_user.id)
     if not updated:
         raise HTTPException(status_code=400, detail="Invalid state transition")
-
     await manager.broadcast("ALERT_UPDATED", alert_to_dict(updated))
+    await status_manager.broadcast_status(updated.id, updated.status)
     return updated
 
 
@@ -71,12 +75,13 @@ async def resolve(
     alert = get_alert_by_id(db, alert_id)
     if not alert:
         raise HTTPException(status_code=404, detail="Alert not found")
-
     updated = resolve_alert(db, alert, current_user.id)
     if not updated:
         raise HTTPException(status_code=400, detail="Invalid state transition")
-
     await manager.broadcast("ALERT_RESOLVED", alert_to_dict(updated))
+    await status_manager.broadcast_status(updated.id, updated.status, updated.resolved_at)
+    if hasattr(updated, "_new_notification") and updated._new_notification:
+        await manager.broadcast("NEW_NOTIFICATION", notification_to_dict(updated._new_notification))
     return updated
 
 
@@ -89,10 +94,11 @@ async def false_report(
     alert = get_alert_by_id(db, alert_id)
     if not alert:
         raise HTTPException(status_code=404, detail="Alert not found")
-
     updated = false_report_alert(db, alert, current_user.id)
     if not updated:
         raise HTTPException(status_code=400, detail="Invalid state transition")
-
     await manager.broadcast("FALSE_REPORT", alert_to_dict(updated))
+    await status_manager.broadcast_status(updated.id, updated.status)
+    if hasattr(updated, "_new_notification") and updated._new_notification:
+        await manager.broadcast("NEW_NOTIFICATION", notification_to_dict(updated._new_notification))
     return updated
