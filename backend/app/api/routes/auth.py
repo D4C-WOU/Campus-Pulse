@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
-from app.core.dependencies import (require_admin, require_super_admin,require_dispatcher)
+from app.core.dependencies import require_super_admin
 from sqlalchemy.orm import Session
 from app.core.dependencies import get_current_user
 from app.models.user import User
@@ -79,33 +79,3 @@ def me(
         "role": current_user.role
     }
 
-@router.get("/admin-test")
-def admin_test(
-    current_user=Depends(require_admin)
-):
-    return {
-        "message": "Admin access granted",
-        "user": current_user.email
-    }
-@router.get("/super-admin-test")
-def super_admin_test(
-    current_user=Depends(
-        require_super_admin
-    )
-):
-    return {
-        "message": "Super Admin access granted",
-        "user": current_user.email
-    }
-
-
-@router.get("/dispatcher-test")
-def dispatcher_test(
-    current_user=Depends(
-        require_dispatcher
-    )
-):
-    return {
-        "message": "Dispatcher access granted",
-        "user": current_user.email
-    }

@@ -69,36 +69,3 @@ def require_super_admin(
     return current_user
 
 
-def require_admin(
-    current_user: User = Depends(
-        get_current_user
-    )
-):
-    if current_user.role not in [
-        "admin",
-        "super_admin"
-    ]:
-        raise HTTPException(
-            status_code=403,
-            detail="Admin access required"
-        )
-
-    return current_user
-
-
-def require_dispatcher(
-    current_user: User = Depends(
-        get_current_user
-    )
-):
-    if current_user.role not in [
-        "dispatcher",
-        "admin",
-        "super_admin"
-    ]:
-        raise HTTPException(
-            status_code=403,
-            detail="Dispatcher access required"
-        )
-
-    return current_user

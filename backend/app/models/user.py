@@ -27,13 +27,10 @@ class User(Base):
     )
 
     role = Column(
-        Enum(
-            "super_admin",
-            "admin",
-            "dispatcher"
-        )
-    )
-
+    Enum("super_admin"),
+    nullable=False,
+    default="super_admin"
+)
     created_at = Column(
         DateTime,
         default=datetime.utcnow

@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Activity, ListChecks, ScrollText, LogOut, Radio } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { cn } from "@/lib/utils";
+import NotificationBell from "./NotificationBell";
 
 // Each nav item gets its own accent color rather than one flat theme color --
 // this is most of the "sleek but multicolor" feel: color is used to help
@@ -74,14 +75,25 @@ export default function AppShell({ children, connected = true }) {
           <span className="font-mono text-sm">campus_pulse</span>
         </header>
 
-        <div className="flex items-center justify-end gap-2 px-6 pt-4 text-xs text-muted-foreground">
-          <Radio
-            className={cn(
-              "size-3.5",
-              connected ? "text-[hsl(var(--status-resolved))]" : "text-[hsl(var(--status-active))]"
-            )}
-          />
-          {connected ? "Live" : "Reconnecting..."}
+        <div className="flex items-center justify-end gap-5 px-6 pt-4">
+
+          <NotificationBell />
+
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+
+            <Radio
+              className={cn(
+                "size-3.5",
+                connected
+                  ? "text-[hsl(var(--status-resolved))]"
+                  : "text-[hsl(var(--status-active))]"
+              )}
+            />
+
+            {connected ? "Live" : "Reconnecting..."}
+
+          </div>
+
         </div>
 
         <main className="flex-1">{children}</main>

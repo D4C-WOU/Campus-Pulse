@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
 
-export default function ProtectedRoute({ children, requiredRole }) {
+export default function ProtectedRoute({ children }) {
   const router = useRouter();
   // Gate rendering until the check resolves, so a lower-privilege admin
   // never sees a flash of protected content before being redirected.
@@ -18,22 +18,16 @@ export default function ProtectedRoute({ children, requiredRole }) {
       return;
     }
 
-    if (requiredRole) {
-      try {
-        const decoded = jwtDecode(token);
-        if (decoded.role !== requiredRole) {
-          router.push("/dashboard");
-          return;
-        }
-      } catch {
-        // Malformed/expired token -- treat the same as logged out.
-        router.push("/login");
-        return;
-      }
+    try {
+      jwtDecode(token);
+    } catch {
+      router.push("/login");
+      return;
     }
 
+
     setChecked(true);
-  }, [requiredRole, router]);
+  }, [router]);
 
   if (!checked) return null;
 

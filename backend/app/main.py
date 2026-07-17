@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 import app.models
+from app.db.base import Base
+from app.db.database import engine
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes.alerts import router as alerts_router
 from app.api.routes.auth import router as auth_router
@@ -9,7 +11,9 @@ from app.api.routes.admins import router as admins_router
 from app.api.routes.dashboard import router as dashboard_router
 from app.api.routes.public import router as public_router
 from app.api.routes.comments import router as comments_router
+from app.api.routes.notifications import router as notifications_router
 
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Campus Pulse API",
@@ -32,6 +36,7 @@ app.include_router(admins_router)
 app.include_router(dashboard_router)
 app.include_router(public_router)
 app.include_router(comments_router)
+app.include_router(notifications_router)
 
 
 @app.get("/")
