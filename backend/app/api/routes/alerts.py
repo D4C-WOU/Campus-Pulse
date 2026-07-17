@@ -1,5 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app.db.session import get_db
 from app.schemas.alert import AlertCreate
@@ -19,10 +21,16 @@ from app.services.alert_service import (
 )
 
 router = APIRouter(prefix="/api/alerts", tags=["Alerts"])
+limiter = Limiter(key_func=get_remote_address)
 
 
 @router.post("/")
-async def create_new_alert(payload: AlertCreate, db: Session = Depends(get_db)):
+@limiter.limit("5/10minutes")
+async def create_new_alert(
+    request: Request,
+    payload: AlertCreate,
+    db: Session = Depends(get_db),
+):
     alert = create_alert(db, payload)
     await manager.broadcast("NEW_ALERT", alert_to_dict(alert))
     if hasattr(alert, "_new_notification") and alert._new_notification:

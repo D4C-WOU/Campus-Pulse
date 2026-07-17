@@ -1,5 +1,7 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from sqlalchemy.orm import Session
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app.db.session import get_db
 from app.schemas.public import PublicAlertStatus
@@ -9,20 +11,16 @@ from app.services.public_service import (
 )
 
 router = APIRouter(prefix="/api/public", tags=["Public"])
+limiter = Limiter(key_func=get_remote_address)
 
 
 @router.get("/alerts/{reference}", response_model=PublicAlertStatus)
 def check_status(reference: str, db: Session = Depends(get_db)):
     result = get_alert_by_reference(db, reference)
-
     if not result:
-        raise HTTPException(
-            status_code=404,
-            detail="No report found for this reference",
-        )
+        raise HTTPException(status_code=404, detail="No report found for this reference")
 
     alert = result["alert"]
-
     return PublicAlertStatus(
         reference=alert.id[:8],
         type=alert.type,
@@ -34,12 +32,7 @@ def check_status(reference: str, db: Session = Depends(get_db)):
         resolved_at=alert.resolved_at,
     )
 
+
 @router.get("/latest-alerts")
-def latest_alerts(
-    limit: int = 3,
-    db: Session = Depends(get_db),
-):
-    return get_latest_public_alerts(
-        db=db,
-        limit=limit,
-    )
+def latest_alerts(limit: int = 3, db: Session = Depends(get_db)):
+    return get_latest_public_alerts(db=db, limit=limit)

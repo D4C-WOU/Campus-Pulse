@@ -1,16 +1,17 @@
 import uuid
 from sqlalchemy.orm import Session
+from sqlalchemy import case
 
 from app.models.alert_comment import AlertComment
 from app.models.user import User
 
+SYSTEM_USER_ID = "system"
+
 
 def list_comments(db: Session, alert_id: str):
-    # Join against User so we can show a name instead of a raw user_id --
-    # the frontend timeline needs "Sarah (Dispatcher)", not a UUID.
     rows = (
         db.query(AlertComment, User.full_name)
-        .join(User, User.id == AlertComment.user_id)
+        .outerjoin(User, User.id == AlertComment.user_id)
         .filter(AlertComment.alert_id == alert_id)
         .order_by(AlertComment.created_at.asc())
         .all()
@@ -21,7 +22,7 @@ def list_comments(db: Session, alert_id: str):
             "id": comment.id,
             "alert_id": comment.alert_id,
             "user_id": comment.user_id,
-            "author_name": full_name,
+            "author_name": full_name if full_name else "System",
             "comment": comment.comment,
             "created_at": comment.created_at,
         }

@@ -4,8 +4,25 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from app.models.alert import Alert
+from app.models.alert_comment import AlertComment
 from app.services.audit_service import create_audit_log
 from app.services.notification_service import create_notification
+
+SYSTEM_USER_ID = "system"
+
+
+def _create_timeline_entry(db: Session, alert_id: str, text: str):
+    """Insert an automatic system comment into the incident timeline."""
+    entry = AlertComment(
+        id=str(uuid.uuid4()),
+        alert_id=alert_id,
+        user_id=SYSTEM_USER_ID,
+        comment=text,
+    )
+    db.add(entry)
+    db.commit()
+    db.refresh(entry)
+    return entry
 
 
 def alert_to_dict(alert: Alert) -> dict:
@@ -50,6 +67,13 @@ def create_alert(db: Session, payload):
     db.commit()
     db.refresh(alert)
 
+    _create_timeline_entry(
+        db,
+        alert.id,
+        f"🚨 Alert created — {alert.type} reported"
+        + (f" near {alert.location_hint}" if alert.location_hint else "") + ".",
+    )
+
     notification = create_notification(
         db=db,
         title="New Alert",
@@ -57,8 +81,6 @@ def create_alert(db: Session, payload):
         type="alert_created",
         alert_id=alert.id,
     )
-
-    # Return both so the route can broadcast the notification event
     alert._new_notification = notification
     return alert
 
@@ -78,6 +100,8 @@ def investigate_alert(db, alert, admin_id):
     alert.status = "investigating"
     db.commit()
     db.refresh(alert)
+
+    _create_timeline_entry(db, alert.id, "🔍 Investigation started.")
     create_audit_log(db, admin_id, alert.id, "ALERT_INVESTIGATING")
     return alert
 
@@ -91,6 +115,8 @@ def resolve_alert(db, alert, admin_id):
     db.commit()
     db.refresh(alert)
 
+    _create_timeline_entry(db, alert.id, "✅ Incident resolved.")
+
     notification = create_notification(
         db=db,
         title="Alert Resolved",
@@ -99,7 +125,6 @@ def resolve_alert(db, alert, admin_id):
         alert_id=alert.id,
     )
     alert._new_notification = notification
-
     create_audit_log(db, admin_id, alert.id, "ALERT_RESOLVED")
     return alert
 
@@ -113,6 +138,8 @@ def false_report_alert(db, alert, admin_id):
     db.commit()
     db.refresh(alert)
 
+    _create_timeline_entry(db, alert.id, "🚫 Marked as false report.")
+
     notification = create_notification(
         db=db,
         title="False Report",
@@ -121,7 +148,6 @@ def false_report_alert(db, alert, admin_id):
         alert_id=alert.id,
     )
     alert._new_notification = notification
-
     create_audit_log(db, admin_id, alert.id, "FALSE_REPORT")
     return alert
 
