@@ -261,3 +261,34 @@ body {
   0% { transform: scale(1); opacity: 0.5; }
   100% { transform: scale(2.2); opacity: 0; }
 }
+
+/* =========================================================
+   Animation utilities for UI polish (Task 9)
+   ========================================================= */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slide-in-from-bottom-1 {
+  from { transform: translateY(6px); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+
+.animate-in {
+  animation-duration: 200ms;
+  animation-timing-function: ease-out;
+  animation-fill-mode: both;
+}
+
+.fade-in {
+  animation-name: fade-in;
+}
+
+.slide-in-from-bottom-1 {
+  animation-name: slide-in-from-bottom-1;
+}
+
+.duration-200 {
+  animation-duration: 200ms;
+}

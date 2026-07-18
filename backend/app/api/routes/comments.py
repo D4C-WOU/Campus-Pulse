@@ -11,7 +11,11 @@ router = APIRouter(prefix="/api/alerts", tags=["Comments"])
 
 
 @router.get("/{alert_id}/comments", response_model=list[CommentResponse])
-def get_comments(alert_id: str, current_user=Depends(require_super_admin), db: Session = Depends(get_db)):
+def get_comments(
+    alert_id: str,
+    current_user=Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
     comments = list_comments(db, alert_id)
     return comments if comments else []
 

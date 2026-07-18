@@ -12,7 +12,6 @@ SYSTEM_USER_ID = "system"
 
 
 def _create_timeline_entry(db: Session, alert_id: str, text: str):
-    """Insert an automatic system comment into the incident timeline."""
     entry = AlertComment(
         id=str(uuid.uuid4()),
         alert_id=alert_id,
@@ -152,7 +151,9 @@ def false_report_alert(db, alert, admin_id):
     return alert
 
 
-def list_alerts_paginated(db: Session, page: int = 1, limit: int = 10, status: str | None = None):
+def list_alerts_paginated(
+    db: Session, page: int = 1, limit: int = 10, status: str | None = None
+):
     query = db.query(Alert)
     if status:
         query = query.filter(Alert.status == status)

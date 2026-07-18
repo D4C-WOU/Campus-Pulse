@@ -15,6 +15,9 @@ import {
 import AlertSection from "@/components/alerts/AlertSection";
 import AlertsToolbar from "@/components/alerts/AlertsToolbar";
 import AlertStats from "@/components/alerts/AlertStats";
+import AlertCardSkeleton from "@/components/alerts/AlertCardSkeleton";
+import EmptyState from "@/components/alerts/EmptyState";
+import { ShieldCheck, Inbox } from "lucide-react";
 
 const STATUS_FILTERS = [
   { value: "all", label: "All" },
@@ -23,7 +26,6 @@ const STATUS_FILTERS = [
   { value: "resolved", label: "Resolved" },
   { value: "false_report", label: "False reports" },
 ];
-
 
 export default function AlertsPage() {
   const [alerts, setAlerts] = useState([]);
@@ -59,76 +61,39 @@ export default function AlertsPage() {
       const exists = prev.some((a) => a.id === data.id);
       if (event === "NEW_ALERT") {
         if (exists) return prev;
-        // Only splice into the visible list on page 1 -- inserting on any
-        // other page would silently push an item off-screen and desync
-        // the pagination count from what's actually rendered.
         if (page !== 1) {
           toast.info(`New ${data.type} report — go to page 1 to see it.`);
           return prev;
         }
         toast.info(`New ${data.type} report: ${data.message}`);
-        return [data, ...prev].slice(0, 20);
+        return [data, ...prev].slice(0, 10);
       }
       return prev.map((a) => (a.id === data.id ? data : a));
     });
   });
 
-  // -----------------------------
-  // Filter + Search + Sort
-  // -----------------------------
-
   const filteredAlerts = alerts
     .filter((alert) => {
-      // status
-      if (
-        statusFilter !== "all" &&
-        alert.status !== statusFilter
-      ) {
-        return false;
-      }
-
-      // search
-      const searchText = search.toLowerCase();
-
+      if (statusFilter !== "all" && alert.status !== statusFilter) return false;
+      const q = search.toLowerCase();
       return (
-        alert.type.toLowerCase().includes(searchText) ||
-        alert.message.toLowerCase().includes(searchText) ||
-        (alert.location_hint || "")
-          .toLowerCase()
-          .includes(searchText)
+        alert.type.toLowerCase().includes(q) ||
+        alert.message.toLowerCase().includes(q) ||
+        (alert.location_hint || "").toLowerCase().includes(q)
       );
     })
     .sort((a, b) => {
       if (sort === "priority") {
-        const order = {
-          critical: 4,
-          high: 3,
-          medium: 2,
-          low: 1,
-        };
-
+        const order = { critical: 4, high: 3, medium: 2, low: 1 };
         return order[b.priority] - order[a.priority];
       }
-
-      if (sort === "oldest") {
-        return (
-          new Date(a.created_at) -
-          new Date(b.created_at)
-        );
-      }
-
-      return (
-        new Date(b.created_at) -
-        new Date(a.created_at)
-      );
+      if (sort === "oldest") return new Date(a.created_at) - new Date(b.created_at);
+      return new Date(b.created_at) - new Date(a.created_at);
     });
 
   const activeAlerts = filteredAlerts.filter((a) =>
-    ["active", "investigating"].includes(
-      a.status
-    )
+    ["active", "investigating"].includes(a.status)
   );
-
   const handledAlerts = filteredAlerts.filter((a) =>
     ["resolved", "false_report"].includes(a.status)
   );
@@ -136,15 +101,8 @@ export default function AlertsPage() {
   const handleAction = async (id, actionFn, label) => {
     try {
       setActingId(id);
-
       const updated = await actionFn(id);
-
-      setAlerts((prev) =>
-        prev.map((alert) =>
-          alert.id === id ? updated : alert
-        )
-      );
-
+      setAlerts((prev) => prev.map((alert) => (alert.id === id ? updated : alert)));
       toast.success(`${label} recorded.`);
     } catch {
       toast.error(`Couldn't ${label.toLowerCase()} this alert.`);
@@ -162,11 +120,7 @@ export default function AlertsPage() {
     <ProtectedRoute>
       <AppShell connected={connected}>
         <div className="mx-auto max-w-4xl px-6 py-8">
-
-          <h1 className="text-xl font-medium">
-            Alerts
-          </h1>
-
+          <h1 className="text-xl font-medium">Alerts</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Every reported incident, updated in real time.
           </p>
@@ -183,19 +137,24 @@ export default function AlertsPage() {
 
           <AlertStats alerts={alerts} />
 
-          {loading ? (
-            <p className="mt-6 text-sm text-muted-foreground">
-              Loading alerts...
-            </p>
-          ) : (
-            <>
+          {/* Loading skeletons */}
+          {loading && (
+            <div className="mt-6 space-y-3">
+              {[...Array(4)].map((_, i) => (
+                <AlertCardSkeleton key={i} />
+              ))}
+            </div>
+          )}
+
+          {/* Populated */}
+          {!loading && filteredAlerts.length > 0 && (
+            <div className="transition-all duration-200">
               <AlertSection
                 title={`Active Queue (${activeAlerts.length})`}
                 alerts={activeAlerts}
                 actingId={actingId}
                 onAction={handleAction}
               />
-
               <AlertSection
                 title={`Handled (${handledAlerts.length})`}
                 alerts={handledAlerts}
@@ -203,15 +162,43 @@ export default function AlertsPage() {
                 onAction={handleAction}
                 muted
               />
-            </>
+            </div>
           )}
 
-          <Pagination
-            page={page}
-            pages={pages}
-            onPageChange={setPage}
-          />
+          {/* Empty state — no alerts at all */}
+          {!loading && alerts.length === 0 && (
+            <div className="mt-8">
+              <EmptyState
+                icon={ShieldCheck}
+                title="All clear"
+                description="No incidents have been reported yet. They'll appear here the moment someone submits a report."
+              />
+            </div>
+          )}
 
+          {/* Empty state — search/filter returned nothing */}
+          {!loading && alerts.length > 0 && filteredAlerts.length === 0 && (
+            <div className="mt-8">
+              <EmptyState
+                icon={Inbox}
+                title="No matching alerts"
+                description="Try adjusting your search or filter to find what you're looking for."
+                action={
+                  <button
+                    onClick={() => {
+                      setSearch("");
+                      setStatusFilter("all");
+                    }}
+                    className="rounded-lg border border-border-subtle px-4 py-2 text-xs font-medium hover:border-border-strong"
+                  >
+                    Clear filters
+                  </button>
+                }
+              />
+            </div>
+          )}
+
+          <Pagination page={page} pages={pages} onPageChange={setPage} />
         </div>
       </AppShell>
     </ProtectedRoute>

@@ -1,6 +1,5 @@
 import uuid
 from sqlalchemy.orm import Session
-from sqlalchemy import case
 
 from app.models.alert_comment import AlertComment
 from app.models.user import User
