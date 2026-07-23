@@ -8,6 +8,8 @@ frontend/out/
 backend/venv/
 **/__pycache__/
 *.pyc
+*.pyo
+venv/
 
 # Environment
 .env
