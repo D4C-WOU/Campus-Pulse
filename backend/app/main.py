@@ -28,18 +28,15 @@ app = FastAPI(title="Campus Pulse API", version="2.0")
 app.state.limiter = limiter
 
 # 1. Add CORS Middleware FIRST
+# app/main.py
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "https://campus-pulse-azure.vercel.app",
-    ],
-    allow_origin_regex=r"https://campus-pulse-.*\.vercel\.app",
+    allow_origins=["*"],  # Allows cross-origin WebSocket handshake from Vercel
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 app.add_middleware(SlowAPIMiddleware)
 
 # 2. Custom Exception Handlers to preserve CORS on errors
