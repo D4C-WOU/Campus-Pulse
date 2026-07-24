@@ -103,7 +103,7 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@campus.edu"
+                placeholder="admin@gmail.com"
                 className="mt-1.5 w-full rounded-xl border border-border-subtle bg-surface px-3.5 py-2.5 text-sm outline-none transition-colors focus:border-[hsl(var(--status-investigating))]"
               />
             </div>
@@ -115,7 +115,7 @@ export default function LoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="admin@123"
                 className="mt-1.5 w-full rounded-xl border border-border-subtle bg-surface px-3.5 py-2.5 text-sm outline-none transition-colors focus:border-[hsl(var(--status-investigating))]"
               />
             </div>
