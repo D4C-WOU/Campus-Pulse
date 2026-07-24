@@ -8,6 +8,40 @@ from app.services.audit_service import create_audit_log
 from app.services.notification_service import create_notification
 
 
+def alert_to_dict(alert: Alert) -> dict:
+    """Helper to serialize Alert ORM model for WebSocket payloads."""
+    if not alert:
+        return {}
+    return {
+        "id": alert.id,
+        "type": alert.type,
+        "message": alert.message,
+        "location_hint": alert.location_hint,
+        "status": alert.status,
+        "priority": alert.priority,
+        "is_false_report": alert.is_false_report,
+        "reported_by": alert.reported_by,
+        "assigned_to": alert.assigned_to,
+        "created_at": alert.created_at.isoformat() if alert.created_at else None,
+        "resolved_at": alert.resolved_at.isoformat() if alert.resolved_at else None,
+    }
+
+
+def notification_to_dict(notification) -> dict:
+    """Helper to serialize Notification ORM model for WebSocket payloads."""
+    if not notification:
+        return {}
+    return {
+        "id": notification.id,
+        "title": notification.title,
+        "message": notification.message,
+        "type": notification.type,
+        "is_read": notification.is_read,
+        "alert_id": notification.alert_id,
+        "created_at": notification.created_at.isoformat() if notification.created_at else None,
+    }
+
+
 def _create_timeline_entry(db: Session, alert_id: str, text: str):
     entry = AlertComment(
         id=str(uuid.uuid4()),
@@ -55,6 +89,23 @@ def create_alert(db: Session, payload):
 
 def get_all_alerts(db: Session):
     return db.query(Alert).order_by(Alert.created_at.desc()).all()
+
+
+def list_alerts_paginated(db: Session, page: int = 1, limit: int = 20, status: str | None = None):
+    query = db.query(Alert)
+    if status:
+        query = query.filter(Alert.status == status)
+
+    total = query.count()
+    items = query.order_by(Alert.created_at.desc()).offset((page - 1) * limit).limit(limit).all()
+
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "pages": (total + limit - 1) // limit if limit else 1,
+    }
 
 
 def get_alert_by_id(db: Session, alert_id: str):
