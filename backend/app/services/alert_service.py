@@ -123,8 +123,12 @@ def list_alerts_paginated(db: Session, page: int = 1, limit: int = 20, status: s
     }
 
 
-def get_alert_by_id(db: Session, alert_id: str):
-    return db.query(Alert).filter(Alert.id == alert_id).first()
+def get_alert_by_code(db: Session, code: str):
+    return (
+        db.query(Alert)
+        .filter(Alert.incident_code == code)
+        .first()
+    )
 
 
 def investigate_alert(db: Session, alert: Alert, admin_id: str):

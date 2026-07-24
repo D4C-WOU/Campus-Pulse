@@ -8,6 +8,6 @@ class AlertComment(Base):
 
     id = Column(String(36), primary_key=True)
     alert_id = Column(String(36), ForeignKey("alerts.id", ondelete="CASCADE"), nullable=False)
-    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=True) # Nullable for system entries
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True) # Nullable for system entries
     comment = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)

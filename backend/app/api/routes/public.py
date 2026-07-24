@@ -22,7 +22,7 @@ def check_status(reference: str, db: Session = Depends(get_db)):
 
     alert = result["alert"]
     return PublicAlertStatus(
-        reference=alert.id[:8],
+        reference=alert.incident_code,
         type=alert.type,
         status=alert.status,
         location_hint=alert.location_hint,

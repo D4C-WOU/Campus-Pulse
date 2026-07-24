@@ -10,10 +10,10 @@ def get_alert_by_reference(db: Session, reference: str):
     clean_ref = reference.strip()
     
     alert = (
-        db.query(Alert)
-        .filter(Alert.id.like(f"{clean_ref}%"))
-        .first()
-    )
+    db.query(Alert)
+    .filter(Alert.incident_code == clean_ref)
+    .first()
+)
 
     if not alert:
         return None
@@ -41,7 +41,7 @@ def get_latest_public_alerts(db: Session, limit: int = 3):
 
     return [
         {
-            "reference": alert.id[:8],
+            "reference": alert.incident_code,
             "type": alert.type,
             "status": alert.status,
             "location_hint": alert.location_hint,

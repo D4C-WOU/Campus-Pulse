@@ -16,13 +16,15 @@ export default function AlertCommentsPanel({ alertId, alertStatus }) {
 
   useEffect(() => {
     if (!alertId) return;
+
     setLoading(true);
+
     getComments(alertId)
       .then((data) => setComments(Array.isArray(data) ? data : []))
       .catch(() => setComments([]))
       .finally(() => setLoading(false));
-  }, [alertId]);
 
+  }, [alertId, alertStatus]);
   const handlePost = async (e) => {
     e.preventDefault();
     if (!text.trim() || isLocked) return;
