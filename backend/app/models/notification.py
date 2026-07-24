@@ -13,5 +13,5 @@ class Notification(Base):
   alert_id = Column(String(36),ForeignKey('alerts.id'),nullable=True)
   user_id = Column(String(36), ForeignKey('users.id'),nullable=True)
   created_at = Column(DateTime,default=datetime.utcnow)
-  alert= relationship('Alert')
-  user= relationship('User')
+  alert = relationship("Alert")
+  user = relationship("User")

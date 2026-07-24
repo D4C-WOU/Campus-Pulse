@@ -8,15 +8,16 @@ from app.services.audit_service import create_audit_log
 from app.services.notification_service import create_notification
 
 
-def alert_to_dict(alert: Alert) -> dict:
-    """Helper to serialize Alert ORM model for WebSocket payloads."""
-    if not alert:
-        return {}
+def alert_to_dict(alert: Alert):
+
     return {
         "id": alert.id,
+        "incident_code": alert.incident_code,
         "type": alert.type,
         "message": alert.message,
         "location_hint": alert.location_hint,
+        "latitude": float(alert.latitude) if alert.latitude else None,
+        "longitude": float(alert.longitude) if alert.longitude else None,
         "status": alert.status,
         "priority": alert.priority,
         "is_false_report": alert.is_false_report,
@@ -56,15 +57,28 @@ def _create_timeline_entry(db: Session, alert_id: str, text: str):
 
 
 def create_alert(db: Session, payload):
+
     alert = Alert(
         id=str(uuid.uuid4()),
+        incident_code=generate_incident_code(db),
+
         type=payload.type,
+
         message=payload.message,
+
         location_hint=payload.location_hint,
+
+        latitude=payload.latitude,
+
+        longitude=payload.longitude,
+
         priority=payload.priority or "medium",
+
         status="active",
+
         reported_by="anonymous",
     )
+
     db.add(alert)
     db.commit()
     db.refresh(alert)
@@ -72,18 +86,19 @@ def create_alert(db: Session, payload):
     _create_timeline_entry(
         db,
         alert.id,
-        f"🚨 Alert created — {alert.type} reported"
-        + (f" near {alert.location_hint}" if alert.location_hint else "") + ".",
+        f"🚨 Alert created — {alert.type} reported.",
     )
 
     notification = create_notification(
         db=db,
         title="New Alert",
-        message=f"{alert.type} reported near {alert.location_hint}",
+        message=f"{alert.type} reported",
         type="alert_created",
         alert_id=alert.id,
     )
+
     alert._new_notification = notification
+
     return alert
 
 
@@ -169,3 +184,20 @@ def false_report_alert(db: Session, alert: Alert, admin_id: str):
     alert._new_notification = notification
     create_audit_log(db, admin_id, alert.id, "FALSE_REPORT")
     return alert
+
+def generate_incident_code(db: Session) -> str:
+    latest = (
+        db.query(Alert)
+        .order_by(Alert.created_at.desc())
+        .first()
+    )
+
+    if not latest or not latest.incident_code:
+        return "INC-000001"
+
+    try:
+        number = int(latest.incident_code.split("-")[1]) + 1
+    except Exception:
+        number = 1
+
+    return f"INC-{number:06d}"
