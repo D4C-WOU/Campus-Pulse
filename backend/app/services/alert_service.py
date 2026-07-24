@@ -1,6 +1,5 @@
 import uuid
 from datetime import datetime
-
 from sqlalchemy.orm import Session
 
 from app.models.alert import Alert
@@ -8,14 +7,12 @@ from app.models.alert_comment import AlertComment
 from app.services.audit_service import create_audit_log
 from app.services.notification_service import create_notification
 
-SYSTEM_USER_ID = "system"
-
 
 def _create_timeline_entry(db: Session, alert_id: str, text: str):
     entry = AlertComment(
         id=str(uuid.uuid4()),
         alert_id=alert_id,
-        user_id=SYSTEM_USER_ID,
+        user_id=None,  # System timeline entry uses None
         comment=text,
     )
     db.add(entry)
@@ -24,41 +21,13 @@ def _create_timeline_entry(db: Session, alert_id: str, text: str):
     return entry
 
 
-def alert_to_dict(alert: Alert) -> dict:
-    return {
-        "id": alert.id,
-        "type": alert.type,
-        "message": alert.message,
-        "location_hint": alert.location_hint,
-        "status": alert.status,
-        "priority": alert.priority,
-        "is_false_report": alert.is_false_report,
-        "reported_by": alert.reported_by,
-        "assigned_to": alert.assigned_to,
-        "created_at": alert.created_at,
-        "resolved_at": alert.resolved_at,
-    }
-
-
-def notification_to_dict(notification) -> dict:
-    return {
-        "id": notification.id,
-        "title": notification.title,
-        "message": notification.message,
-        "type": notification.type,
-        "is_read": notification.is_read,
-        "alert_id": notification.alert_id,
-        "created_at": str(notification.created_at),
-    }
-
-
 def create_alert(db: Session, payload):
     alert = Alert(
         id=str(uuid.uuid4()),
         type=payload.type,
         message=payload.message,
         location_hint=payload.location_hint,
-        priority=payload.priority,
+        priority=payload.priority or "medium",
         status="active",
         reported_by="anonymous",
     )
@@ -92,8 +61,21 @@ def get_alert_by_id(db: Session, alert_id: str):
     return db.query(Alert).filter(Alert.id == alert_id).first()
 
 
-def investigate_alert(db, alert, admin_id):
+def acknowledge_alert(db: Session, alert: Alert, admin_id: str):
     if alert.status != "active":
+        return None
+
+    alert.status = "acknowledged"
+    db.commit()
+    db.refresh(alert)
+
+    _create_timeline_entry(db, alert.id, "👁️ Alert acknowledged by dispatcher.")
+    create_audit_log(db, admin_id, alert.id, "ALERT_ACKNOWLEDGED")
+    return alert
+
+
+def investigate_alert(db: Session, alert: Alert, admin_id: str):
+    if alert.status not in ["active", "acknowledged"]:
         return None
 
     alert.status = "investigating"
@@ -105,8 +87,8 @@ def investigate_alert(db, alert, admin_id):
     return alert
 
 
-def resolve_alert(db, alert, admin_id):
-    if alert.status != "investigating":
+def resolve_alert(db: Session, alert: Alert, admin_id: str):
+    if alert.status not in ["acknowledged", "investigating"]:
         return None
 
     alert.status = "resolved"
@@ -128,7 +110,7 @@ def resolve_alert(db, alert, admin_id):
     return alert
 
 
-def false_report_alert(db, alert, admin_id):
+def false_report_alert(db: Session, alert: Alert, admin_id: str):
     if alert.status == "resolved":
         return None
 
@@ -149,27 +131,3 @@ def false_report_alert(db, alert, admin_id):
     alert._new_notification = notification
     create_audit_log(db, admin_id, alert.id, "FALSE_REPORT")
     return alert
-
-
-def list_alerts_paginated(
-    db: Session, page: int = 1, limit: int = 10, status: str | None = None
-):
-    query = db.query(Alert)
-    if status:
-        query = query.filter(Alert.status == status)
-
-    total = query.count()
-    items = (
-        query.order_by(Alert.created_at.desc())
-        .offset((page - 1) * limit)
-        .limit(limit)
-        .all()
-    )
-
-    return {
-        "items": items,
-        "page": page,
-        "limit": limit,
-        "total": total,
-        "pages": (total + limit - 1) // limit if total else 0,
-    }

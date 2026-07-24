@@ -1,17 +1,17 @@
 from sqlalchemy.orm import Session
-
 from app.models.alert import Alert
 from app.models.alert_comment import AlertComment
 
 
 def get_alert_by_reference(db: Session, reference: str):
     """
-    Returns an alert plus its latest admin comment.
+    Looks up an alert by matching the first 8 characters of its UUID.
     """
-
+    clean_ref = reference.strip()
+    
     alert = (
         db.query(Alert)
-        .filter(Alert.id.like(f"{reference}%"))
+        .filter(Alert.id.like(f"{clean_ref}%"))
         .first()
     )
 
@@ -32,10 +32,6 @@ def get_alert_by_reference(db: Session, reference: str):
 
 
 def get_latest_public_alerts(db: Session, limit: int = 3):
-    """
-    Returns the latest public-safe incidents for the homepage.
-    """
-
     alerts = (
         db.query(Alert)
         .order_by(Alert.created_at.desc())
