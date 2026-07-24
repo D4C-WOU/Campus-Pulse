@@ -130,6 +130,12 @@ def get_alert_by_code(db: Session, code: str):
         .first()
     )
 
+def get_alert_by_id(db: Session, alert_id: str):
+    return (
+        db.query(Alert)
+        .filter(Alert.id == alert_id)
+        .first()
+    )
 
 def investigate_alert(db: Session, alert: Alert, admin_id: str):
     if alert.status != "active":
