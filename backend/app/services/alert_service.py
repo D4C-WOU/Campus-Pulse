@@ -12,7 +12,7 @@ def _create_timeline_entry(db: Session, alert_id: str, text: str):
     entry = AlertComment(
         id=str(uuid.uuid4()),
         alert_id=alert_id,
-        user_id=None,  # System timeline entry uses None
+        user_id=None,  # System entries use None
         comment=text,
     )
     db.add(entry)
@@ -61,21 +61,8 @@ def get_alert_by_id(db: Session, alert_id: str):
     return db.query(Alert).filter(Alert.id == alert_id).first()
 
 
-def acknowledge_alert(db: Session, alert: Alert, admin_id: str):
-    if alert.status != "active":
-        return None
-
-    alert.status = "acknowledged"
-    db.commit()
-    db.refresh(alert)
-
-    _create_timeline_entry(db, alert.id, "👁️ Alert acknowledged by dispatcher.")
-    create_audit_log(db, admin_id, alert.id, "ALERT_ACKNOWLEDGED")
-    return alert
-
-
 def investigate_alert(db: Session, alert: Alert, admin_id: str):
-    if alert.status not in ["active", "acknowledged"]:
+    if alert.status != "active":
         return None
 
     alert.status = "investigating"
@@ -88,7 +75,7 @@ def investigate_alert(db: Session, alert: Alert, admin_id: str):
 
 
 def resolve_alert(db: Session, alert: Alert, admin_id: str):
-    if alert.status not in ["acknowledged", "investigating"]:
+    if alert.status != "investigating":
         return None
 
     alert.status = "resolved"
