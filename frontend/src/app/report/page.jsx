@@ -37,16 +37,16 @@ function TrackingCodeBox({ code }) {
         <AlertTriangle className="mt-0.5 size-4 shrink-0 text-[hsl(var(--status-active))]" />
         <div className="flex-1">
           <p className="text-sm font-semibold text-[hsl(var(--status-active))]">
-            Save your tracking code now
+            Save your tracking code — you cannot recover it later
           </p>
           <p className="mt-1 text-xs text-[hsl(var(--status-active))]">
-            This code cannot be recovered if lost. Copy and save it somewhere safe.
+            Use this code on the Check Status page to follow your report in real time.
           </p>
         </div>
       </div>
 
       <div className="mt-4 flex items-center gap-2 rounded-lg border border-[hsl(var(--status-active)/0.3)] bg-white/60 px-4 py-3">
-        <span className="flex-1 font-mono text-lg font-bold tracking-widest text-foreground">
+        <span className="flex-1 font-mono text-base font-bold tracking-widest text-foreground">
           {code}
         </span>
         <button
@@ -71,6 +71,14 @@ function TrackingCodeBox({ code }) {
           )}
         </button>
       </div>
+
+      <p className="mt-3 text-xs text-[hsl(var(--status-active))]">
+        Enter this exact code on the{" "}
+        <Link href="/check-status" className="font-bold underline">
+          Check Status
+        </Link>{" "}
+        page to track your report.
+      </p>
     </div>
   );
 }
@@ -113,15 +121,22 @@ export default function ReportPage() {
         priority: "medium",
       });
       setSubmitted(alert);
-    } catch {
-      toast.error("Couldn't submit the report. Please try again.");
+    } catch (err) {
+      // Give a more specific error if it's a rate limit
+      if (err?.response?.status === 429) {
+        toast.error("Too many reports submitted recently. Please wait a few minutes and try again.");
+      } else {
+        toast.error("Couldn't submit the report. Please try again.");
+      }
     } finally {
       setSubmitting(false);
     }
   };
 
   if (submitted) {
+    // The backend returns incident_code (e.g. "INC-000042")
     const trackingCode = submitted.incident_code;
+
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-6">
         <div className="w-full max-w-md rounded-2xl border border-border-subtle bg-surface p-8">
@@ -135,17 +150,13 @@ export default function ReportPage() {
 
           <TrackingCodeBox code={trackingCode} />
 
-          <div className="mt-6 rounded-lg border border-border-subtle bg-surface-elevated px-4 py-3 text-center">
-            <p className="text-xs text-muted-foreground">
-              Use this code on the{" "}
-              <Link href="/check-status" className="font-medium underline underline-offset-2 hover:text-foreground">
-                Check Status
-              </Link>{" "}
-              page to track your report.
-            </p>
-          </div>
-
           <div className="mt-6 flex flex-col gap-2">
+            <Link
+              href={`/check-status?ref=${encodeURIComponent(trackingCode)}`}
+              className="flex items-center justify-center gap-2 rounded-xl bg-[hsl(var(--status-investigating))] py-2.5 text-sm font-medium text-white hover:opacity-90"
+            >
+              Track my report now
+            </Link>
             <button
               onClick={() => {
                 setSubmitted(null);
@@ -154,7 +165,7 @@ export default function ReportPage() {
                 setMessage("");
                 setLocationHint("");
               }}
-              className="rounded-lg border border-border-subtle px-4 py-2.5 text-sm hover:border-border-strong"
+              className="rounded-xl border border-border-subtle px-4 py-2.5 text-sm hover:border-border-strong"
             >
               File another report
             </button>
@@ -186,12 +197,12 @@ export default function ReportPage() {
           This report is anonymous. No account needed.
         </p>
 
-        {/* Pre-submission tracking code warning */}
         <div className="mt-4 flex items-start gap-2 rounded-xl border border-[hsl(var(--status-acknowledged)/0.4)] bg-[hsl(var(--status-acknowledged-bg))] px-4 py-3">
           <AlertTriangle className="mt-0.5 size-4 shrink-0 text-[hsl(var(--status-acknowledged))]" />
           <p className="text-xs text-[hsl(var(--status-acknowledged))]">
-            <span className="font-semibold">Save your tracking code</span> — after submitting you'll
-            receive a unique code. Copy it immediately; it cannot be recovered if lost.
+            <span className="font-semibold">Save your tracking code</span> — after submitting
+            you'll receive a code like <span className="font-mono font-bold">INC-000042</span>.
+            Copy it immediately; it cannot be recovered if lost.
           </p>
         </div>
 

@@ -5,9 +5,8 @@ import { toast } from "sonner";
 import { checkAlertStatus } from "@/app/services/publicService";
 import { formatRelativeTime } from "@/lib/utils";
 import { STATUS_META } from "@/lib/alertMeta";
-import { Search, Radio } from "lucide-react";
+import { Search, Radio, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { useStatusSocket } from "@/hooks/useStatusSocket";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +27,9 @@ export default function CheckStatusPage() {
     toast.info(`Status updated to: ${data.status.replace("_", " ")}`);
   };
 
+  // Use the full incident code (INC-XXXXXX) as the socket reference
+  // The backend status_manager uses alert_id[:8] as key, but we connect
+  // using the incident_code so it matches the public-facing reference.
   const { connected } = useStatusSocket(
     result ? result.reference : null,
     handleStatusUpdate
@@ -35,15 +37,17 @@ export default function CheckStatusPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!reference.trim()) return;
+    const raw = reference.trim().toUpperCase();
+    if (!raw) return;
 
     setLoading(true);
     setResult(null);
     try {
-      const data = await checkAlertStatus(reference.trim());
+      // Accept both "INC-000001" and raw codes; the backend normalizes
+      const data = await checkAlertStatus(raw);
       setResult(data);
     } catch {
-      toast.error("No report found for that reference number.");
+      toast.error("No report found for that reference. Double-check the code and try again.");
     } finally {
       setLoading(false);
     }
@@ -52,30 +56,32 @@ export default function CheckStatusPage() {
   const status = result ? STATUS_META[result.status] : null;
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6">
+    <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-12">
       <Link
         href="/"
-        className="inline-flex mb-6 items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+        className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="size-4" />
         Back to home
       </Link>
+
       <h1 className="text-xl font-medium">Check report status</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Enter the reference number you received when you submitted a report.
+        Enter the reference code you received when you submitted a report.
+        It looks like <span className="font-mono font-medium">INC-000042</span>.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-6 flex gap-2">
         <input
           value={reference}
           onChange={(e) => setReference(e.target.value.toUpperCase())}
-          placeholder="e.g. A1B2C3D4"
-          maxLength={8}
-          className="flex-1 rounded-xl border border-border-subtle bg-surface px-4 py-2.5 text-sm uppercase tracking-widest outline-none focus:border-border-strong"
+          placeholder="e.g. INC-000042"
+          maxLength={20}
+          className="flex-1 rounded-xl border border-border-subtle bg-surface px-4 py-2.5 text-sm font-mono tracking-wide uppercase outline-none focus:border-border-strong"
         />
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !reference.trim()}
           className="flex items-center gap-1.5 rounded-xl bg-foreground px-4 py-2.5 text-sm text-background disabled:opacity-50"
         >
           <Search className="size-4" />
@@ -85,8 +91,11 @@ export default function CheckStatusPage() {
 
       {result && (
         <div className="mt-6 rounded-2xl border border-border-subtle bg-surface p-5">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium capitalize">{result.type}</span>
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <span className="text-sm font-semibold capitalize">{result.type}</span>
+              <p className="font-mono text-xs text-muted-foreground">{result.reference}</p>
+            </div>
             <div className="flex items-center gap-2">
               {result.status !== "resolved" && result.status !== "false_report" && (
                 <span

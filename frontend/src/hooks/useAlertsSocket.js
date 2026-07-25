@@ -1,19 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import ReconnectingWebSocket from "reconnecting-websocket";
 
 function wsUrl() {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-  return apiUrl.replace(/^http/, "ws") + "/ws/alerts";
+  // Replace http:// with ws:// and https:// with wss://
+  // This is critical for production (Render uses HTTPS -> WSS)
+  return apiUrl.replace(/^https/, "wss").replace(/^http/, "ws") + "/ws/alerts";
 }
 
-/**
- * Subscribes to the live alerts feed. Returns the current connection
- * state and the most recent event, and calls onEvent(event, data) for
- * every message so callers can merge updates into their own state
- * (e.g. an alerts list) without this hook owning that state itself.
- */
 export function useAlertsSocket(onEvent) {
   const [connected, setConnected] = useState(false);
   const socketRef = useRef(null);
@@ -21,7 +17,14 @@ export function useAlertsSocket(onEvent) {
   onEventRef.current = onEvent;
 
   useEffect(() => {
-    const socket = new ReconnectingWebSocket(wsUrl());
+    const socket = new ReconnectingWebSocket(wsUrl(), [], {
+      // Increase timeouts for Render's cold starts / proxy latency
+      connectionTimeout: 10000,
+      maxRetries: Infinity,
+      maxReconnectionDelay: 10000,
+      minReconnectionDelay: 2000,
+      reconnectionDelayGrowFactor: 1.3,
+    });
     socketRef.current = socket;
 
     socket.addEventListener("open", () => setConnected(true));
