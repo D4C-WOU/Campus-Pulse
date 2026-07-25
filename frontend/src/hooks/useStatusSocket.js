@@ -23,8 +23,8 @@ export function useStatusSocket(reference, onStatusUpdate) {
     const socket = new ReconnectingWebSocket(wsUrl(reference), [], {
       connectionTimeout: 10000,
       maxRetries: Infinity,
-      maxReconnectionDelay: 10000,
-      minReconnectionDelay: 2000,
+      maxReconnectionDelay: 5000,
+      minReconnectionDelay: 1000,
       reconnectionDelayGrowFactor: 1.3,
     });
     socketRef.current = socket;
@@ -36,6 +36,11 @@ export function useStatusSocket(reference, onStatusUpdate) {
     socket.addEventListener("message", (msg) => {
       try {
         const parsed = JSON.parse(msg.data);
+        // Respond to server keepalive pings
+        if (parsed.event === "ping") {
+          socket.send(JSON.stringify({ event: "pong" }));
+          return;
+        }
         if (parsed.event === "STATUS_UPDATE") {
           callbackRef.current?.(parsed.data);
         }

@@ -1,3 +1,4 @@
+import asyncio
 import json
 from typing import List
 from fastapi import WebSocket
@@ -16,9 +17,12 @@ class ConnectionManager:
             self.active_connections.remove(websocket)
 
     async def broadcast(self, event: str, data: dict):
+        if not self.active_connections:
+            return
         payload = json.dumps({"event": event, "data": data}, default=str)
         stale = []
-        for connection in self.active_connections:
+        # Copy the list — a disconnect mid-loop would mutate it otherwise
+        for connection in list(self.active_connections):
             try:
                 await connection.send_text(payload)
             except Exception:

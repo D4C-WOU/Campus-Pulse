@@ -5,8 +5,6 @@ import ReconnectingWebSocket from "reconnecting-websocket";
 
 function wsUrl() {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-  // Replace http:// with ws:// and https:// with wss://
-  // This is critical for production (Render uses HTTPS -> WSS)
   return apiUrl.replace(/^https/, "wss").replace(/^http/, "ws") + "/ws/alerts";
 }
 
@@ -18,22 +16,34 @@ export function useAlertsSocket(onEvent) {
 
   useEffect(() => {
     const socket = new ReconnectingWebSocket(wsUrl(), [], {
-      // Increase timeouts for Render's cold starts / proxy latency
       connectionTimeout: 10000,
       maxRetries: Infinity,
-      maxReconnectionDelay: 10000,
-      minReconnectionDelay: 2000,
+      maxReconnectionDelay: 5000,
+      minReconnectionDelay: 1000,
       reconnectionDelayGrowFactor: 1.3,
     });
     socketRef.current = socket;
 
-    socket.addEventListener("open", () => setConnected(true));
-    socket.addEventListener("close", () => setConnected(false));
-    socket.addEventListener("error", () => setConnected(false));
+    socket.addEventListener("open", () => {
+      setConnected(true);
+    });
+
+    socket.addEventListener("close", () => {
+      setConnected(false);
+    });
+
+    socket.addEventListener("error", () => {
+      setConnected(false);
+    });
 
     socket.addEventListener("message", (msg) => {
       try {
         const parsed = JSON.parse(msg.data);
+        // Server keepalive ping — respond with pong, don't pass to handler
+        if (parsed.event === "ping") {
+          socket.send(JSON.stringify({ event: "pong" }));
+          return;
+        }
         onEventRef.current?.(parsed.event, parsed.data);
       } catch {
         // ignore malformed frames
