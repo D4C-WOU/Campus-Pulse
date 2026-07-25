@@ -6,17 +6,29 @@ Report a fire, medical, or safety incident anonymously in seconds — watch camp
 
 ---
 
+## 🔗 Live Demo
+
+**[campus-pulse-azure.vercel.app](https://campus-pulse-azure.vercel.app/)**
+
+> ⚠️ **Note on the live demo:** the WebSocket-powered features (live dashboard updates, live per-report status tracking) do **not** work on the hosted demo, due to how the free-tier deployment handles persistent WebSocket connections. Everything else — reporting, auth, dashboard, audit logs, analytics — works as expected on the live link.
+>
+> To see the full real-time experience (live incident feed, live status updates), **clone the repo and run it locally** using the instructions below.
+
+---
+
 ## 🎥 What it does
 
 Campus Pulse has two sides:
 
 **For anyone on campus (no account needed)**
+
 - Submit an incident report (Fire / Medical / Safety) in under a minute
 - Get an 8-character tracking code back immediately
 - Check the live status of a report at any time — no login required
 - Get pushed status updates over WebSocket the instant an admin acts on it
 
 **For campus staff (authenticated dashboard)**
+
 - Watch new incidents land on the dashboard in **real time**, no refreshing
 - Move an incident through its lifecycle: `Active → Investigating → Resolved` (or `False Report`)
 - Leave timestamped comments/notes on an incident for a full case timeline
@@ -28,17 +40,17 @@ Campus Pulse has two sides:
 
 ## 🧱 Tech Stack
 
-| Layer            | Technology                                              |
-|-------------------|----------------------------------------------------------|
-| Frontend          | Next.js 16 (App Router), React 19, JavaScript (JSX)     |
-| Styling / UI      | Tailwind CSS v4, shadcn/ui (Radix primitives), Lucide icons |
-| State             | Zustand (auth), React hooks                              |
-| Real-time         | Native browser WebSockets + `reconnecting-websocket`     |
-| Backend           | FastAPI (Python)                                          |
-| Database          | MySQL                                                     |
-| ORM               | SQLAlchemy (sync) + PyMySQL                                |
-| Auth              | JWT (`python-jose`) + bcrypt password hashing (`passlib`)  |
-| Rate limiting     | SlowAPI (protects the public report endpoint from abuse)   |
+| Layer         | Technology                                                  |
+| ------------- | ------------------------------------------------------------ |
+| Frontend      | Next.js 16 (App Router), React 19, JavaScript (JSX)         |
+| Styling / UI  | Tailwind CSS v4, shadcn/ui (Radix primitives), Lucide icons |
+| State         | Zustand (auth), React hooks                                 |
+| Real-time     | Native browser WebSockets + `reconnecting-websocket`        |
+| Backend       | FastAPI (Python)                                            |
+| Database      | MySQL                                                        |
+| ORM           | SQLAlchemy (sync) + PyMySQL                                 |
+| Auth          | JWT (`python-jose`) + bcrypt password hashing (`passlib`)   |
+| Rate limiting | SlowAPI (protects the public report endpoint from abuse)    |
 
 No TypeScript, no Alembic migrations, no ORM-agnostic abstraction layers — the stack was kept intentionally lean and readable end to end.
 
@@ -82,7 +94,10 @@ No TypeScript, no Alembic migrations, no ORM-agnostic abstraction layers — the
 
 ## 🚀 Getting Started
 
+Run it locally to get the full experience, including working WebSockets.
+
 ### Prerequisites
+
 - Node.js 20+
 - Python 3.11+
 - A running MySQL instance
@@ -98,7 +113,7 @@ pip install -r requirements.txt
 
 Create a `.env` file in `backend/`:
 
-```env
+```
 DATABASE_URL=mysql+pymysql://<user>:<password>@localhost:3306/campus_pulse
 SECRET_KEY=your-secret-key
 ALGORITHM=HS256
@@ -122,7 +137,7 @@ npm install
 
 Create a `.env.local` file in `frontend/`:
 
-```env
+```
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
@@ -132,29 +147,29 @@ Run the dev server:
 npm run dev
 ```
 
-The app will be available at `http://localhost:3000`.
+The app will be available at `http://localhost:3000`, with full WebSocket functionality (live dashboard updates and live status tracking) working end to end.
 
 ---
 
 ## 🔌 API Overview
 
-| Method | Endpoint                                   | Access          | Description                              |
-|--------|---------------------------------------------|-----------------|-------------------------------------------|
-| POST   | `/api/auth/login`                          | Public          | Staff login, returns a JWT                |
-| GET    | `/api/auth/me`                             | Authenticated   | Current user profile                      |
-| POST   | `/api/alerts/`                             | Public          | Submit a new incident (rate-limited)      |
-| GET    | `/api/alerts/`                             | Staff           | Paginated, filterable alert list          |
-| PATCH  | `/api/alerts/{id}/investigate`             | Staff           | Move an alert into investigation          |
-| PATCH  | `/api/alerts/{id}/resolve`                 | Staff           | Resolve an alert                          |
-| PATCH  | `/api/alerts/{id}/false-report`            | Staff           | Mark an alert as a false report           |
-| GET/POST | `/api/alerts/{id}/comments`               | Staff           | Timeline / investigation notes            |
-| GET    | `/api/public/alerts/{reference}`           | Public          | Look up a report by its tracking code     |
-| GET    | `/api/public/latest-alerts`                | Public          | Recent public incident feed for the homepage |
-| GET    | `/api/analytics/overview`                  | Staff           | Dashboard stats                           |
-| GET    | `/api/audit-logs/`                         | Super Admin     | Full administrative audit trail           |
-| GET/POST/DELETE | `/api/admins/`                    | Super Admin     | Manage staff accounts                     |
-| WS     | `/ws/alerts`                                | Staff           | Live broadcast of every alert event       |
-| WS     | `/ws/status/{reference}`                   | Public          | Live status updates for one report        |
+| Method          | Endpoint                         | Access        | Description                                  |
+| --------------- | --------------------------------- | ------------- | --------------------------------------------- |
+| POST            | `/api/auth/login`                | Public        | Staff login, returns a JWT                   |
+| GET             | `/api/auth/me`                    | Authenticated | Current user profile                          |
+| POST            | `/api/alerts/`                    | Public        | Submit a new incident (rate-limited)          |
+| GET             | `/api/alerts/`                    | Staff         | Paginated, filterable alert list              |
+| PATCH           | `/api/alerts/{id}/investigate`    | Staff         | Move an alert into investigation              |
+| PATCH           | `/api/alerts/{id}/resolve`        | Staff         | Resolve an alert                              |
+| PATCH           | `/api/alerts/{id}/false-report`   | Staff         | Mark an alert as a false report               |
+| GET/POST        | `/api/alerts/{id}/comments`       | Staff         | Timeline / investigation notes                |
+| GET             | `/api/public/alerts/{reference}`  | Public        | Look up a report by its tracking code         |
+| GET             | `/api/public/latest-alerts`       | Public        | Recent public incident feed for the homepage  |
+| GET             | `/api/analytics/overview`         | Staff         | Dashboard stats                               |
+| GET             | `/api/audit-logs/`                | Super Admin   | Full administrative audit trail               |
+| GET/POST/DELETE | `/api/admins/`                    | Super Admin   | Manage staff accounts                         |
+| WS              | `/ws/alerts`                      | Staff         | Live broadcast of every alert event           |
+| WS              | `/ws/status/{reference}`          | Public        | Live status updates for one report            |
 
 ---
 
