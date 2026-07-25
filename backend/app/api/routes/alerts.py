@@ -34,7 +34,9 @@ async def create_new_alert(
     alert = create_alert(db, payload)
     await manager.broadcast("NEW_ALERT", alert_to_dict(alert))
     if hasattr(alert, "_new_notification") and alert._new_notification:
-        await manager.broadcast("NEW_NOTIFICATION", notification_to_dict(alert._new_notification))
+        await manager.broadcast(
+            "NEW_NOTIFICATION", notification_to_dict(alert._new_notification)
+        )
     return alert
 
 
@@ -70,7 +72,8 @@ async def investigate(
     if not updated:
         raise HTTPException(status_code=400, detail="Invalid state transition")
     await manager.broadcast("ALERT_UPDATED", alert_to_dict(updated))
-    await status_manager.broadcast_status(updated.id, updated.status)
+    # Use incident_code so the public status socket can match it
+    await status_manager.broadcast_status(updated.incident_code, updated.status)
     return updated
 
 
@@ -87,9 +90,13 @@ async def resolve(
     if not updated:
         raise HTTPException(status_code=400, detail="Invalid state transition")
     await manager.broadcast("ALERT_RESOLVED", alert_to_dict(updated))
-    await status_manager.broadcast_status(updated.id, updated.status, updated.resolved_at)
+    await status_manager.broadcast_status(
+        updated.incident_code, updated.status, updated.resolved_at
+    )
     if hasattr(updated, "_new_notification") and updated._new_notification:
-        await manager.broadcast("NEW_NOTIFICATION", notification_to_dict(updated._new_notification))
+        await manager.broadcast(
+            "NEW_NOTIFICATION", notification_to_dict(updated._new_notification)
+        )
     return updated
 
 
@@ -106,7 +113,9 @@ async def false_report(
     if not updated:
         raise HTTPException(status_code=400, detail="Invalid state transition")
     await manager.broadcast("FALSE_REPORT", alert_to_dict(updated))
-    await status_manager.broadcast_status(updated.id, updated.status)
+    await status_manager.broadcast_status(updated.incident_code, updated.status)
     if hasattr(updated, "_new_notification") and updated._new_notification:
-        await manager.broadcast("NEW_NOTIFICATION", notification_to_dict(updated._new_notification))
+        await manager.broadcast(
+            "NEW_NOTIFICATION", notification_to_dict(updated._new_notification)
+        )
     return updated
