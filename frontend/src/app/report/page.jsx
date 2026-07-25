@@ -121,8 +121,7 @@ export default function ReportPage() {
   };
 
   if (submitted) {
-    const trackingCode = submitted.id?.slice(0, 8).toUpperCase();
-
+    const trackingCode = submitted.incident_code;
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-6">
         <div className="w-full max-w-md rounded-2xl border border-border-subtle bg-surface p-8">

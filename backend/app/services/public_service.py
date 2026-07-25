@@ -5,15 +5,16 @@ from app.models.alert_comment import AlertComment
 
 def get_alert_by_reference(db: Session, reference: str):
     """
-    Looks up an alert by matching the first 8 characters of its UUID.
+    Looks up an alert by its incident code.
     """
-    clean_ref = reference.strip()
-    
+
+    clean_ref = reference.strip().upper()
+
     alert = (
-    db.query(Alert)
-    .filter(Alert.incident_code == clean_ref)
-    .first()
-)
+        db.query(Alert)
+        .filter(Alert.incident_code == clean_ref)
+        .first()
+    )
 
     if not alert:
         return None
